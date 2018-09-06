@@ -10,8 +10,6 @@
 #include <Wire.h>
 #include <SPI.h>
 
-#define SLEEP_PERIOD 900e6 //us -> 15min
-
 
 const char* ssid = WIFI_SSID;
 const char* password = WIFI_PSWD;
@@ -55,9 +53,8 @@ void otaError(ota_error_t error)
     case OTA_END_ERROR:
       Serial.println("end error"); break;
     default:
-      Serial.println("Unknown error");
+      Serial.println("unknown error");
   }
-  
 }
 
 void otaProgress(unsigned int actual, unsigned int maxsize)
@@ -139,14 +136,14 @@ void loop() {
         // Check to see if
         if (WiFi.status() == WL_CONNECT_FAILED) {
           Serial.println("Failed to connect to WiFi");
-          ESP.deepSleep(SLEEP_PERIOD);
+          //ESP.deepSleep(SLEEP_PERIOD);
         }
     
         delay(500);
         // Only try for 15 seconds.
         if (millis() - wifiConnectStart > 15000) {
           Serial.println("Failed to connect to WiFi");
-          ESP.deepSleep(SLEEP_PERIOD);
+          //ESP.deepSleep(SLEEP_PERIOD);
         }
     }
     Serial.println("Connected!");    
@@ -176,7 +173,7 @@ void loop() {
         wifiClient.stop();
 
 
-  ESP.deepSleep(SLEEP_PERIOD);//deep sleep
+  delay(1000);
 }
 
 int Send(uint8_t d[],uint8_t d_len){
