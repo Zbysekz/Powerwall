@@ -1,3 +1,4 @@
 
 espController/wifiCredentials.h
 *.hex
+*.bin

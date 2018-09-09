@@ -37,6 +37,8 @@ import logging
 import hashlib
 import random
 
+BINARY_NAME = "espController.ino.generic.bin"
+IP_ADDRESS="192.168.0.10"
 # Commands
 FLASH = 0
 SPIFFS = 100
@@ -316,6 +318,7 @@ def main(args):
 
 
 if __name__ == '__main__':
-  main([sys.argv[0],"-i", "192.168.0.10","-f","D:\_Data\ArduinoProjects\esp_meteo\esp_meteo.ino.generic.bin","-d"])#main(sys.argv)
-  raw_input();
+    #look at the current directory
+  main([sys.argv[0],"-i", IP_ADDRESS,"-f",os.path.dirname(os.path.realpath(__file__))+"/"+BINARY_NAME,"-d"])#main(sys.argv)
+  input();
 # end if
