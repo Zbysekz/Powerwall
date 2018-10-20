@@ -1,0 +1,1 @@
+"C:\Program Files (x86)\Arduino\arduino.exe" "D:\_Data\Powerwall\espController\a_defines.ino" --preferences-file D:\_Data\Powerwall\espController\preferences.txt
