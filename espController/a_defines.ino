@@ -27,7 +27,7 @@ Adafruit_SSD1306 display;
 bool connectedToWifi = false;
 bool serverCommState = false;
 uint8_t i2cstatus;
-int cntRetryConnect=0,cntCommData=0,cntDelayAfterStart=0,cntScanModules=0;
+int cntRetryConnect=0,cntCommData=0,cntDelayAfterStart=0,cntScanModules=0,cntCalibData=30;
 float temp,pressure;
 int supplyVoltage;
 int i;
@@ -67,20 +67,16 @@ uint16_t crcReal;
 #define read_error_counter 15
 #define read_bypass_enabled_state 16
 #define read_bypass_voltage_measurement 17
-#define read_load_resistance 18
 
 //Default values
 struct cell_module {
   // 7 bit slave I2C address
   uint8_t address; //module address
-  uint16_t voltage;//voltage
-  uint16_t temperature;//temperature of NTC sensor
-
-  uint16_t balanceTarget;//?
+  uint16_t voltage;//voltage [mV]
+  uint16_t temperature;//temperature of NTC sensor [°C]
   
   float voltageCalib;//voltage calibration offset constant
   float temperatureCalib;//temperature calibration offset constant
-  float loadResistance;//
 
   bool factoryReset;
 

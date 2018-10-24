@@ -42,7 +42,7 @@ void setup() {
 
   //Load our EEPROM configuration
   if (!LoadConfigFromEEPROM()) {
-    //Do something here for bad configuration??
+    badConfiguration = true;
   }
 
   cli();//stop interrupts

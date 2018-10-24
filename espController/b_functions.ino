@@ -36,6 +36,30 @@ void ProcessReceived(uint8_t data[]){
     case 2:
       Provision();
     break;
+    case 3: // set voltage calibration to specific cell
+      float_to_bytes.buffer[0]=data[2];
+      float_to_bytes.buffer[1]=data[3];
+      float_to_bytes.buffer[2]=data[4];
+      float_to_bytes.buffer[3]=data[5];
+      
+      Serial.print("Calibrating voltage for module:");
+      Serial.println(data[1]);
+      Serial.println(float_to_bytes.val);
+      
+      command_set_voltage_calibration(data[1],float_to_bytes.val);
+    break;
+    case 4: // set temperature calibration to specific cell
+      float_to_bytes.buffer[0]=data[2];
+      float_to_bytes.buffer[1]=data[3];
+      float_to_bytes.buffer[2]=data[4];
+      float_to_bytes.buffer[3]=data[5];
+      
+      Serial.print("Calibrating temperature for module:");
+      Serial.println(data[1]);
+      Serial.println(float_to_bytes.val);
+      
+      command_set_temperature_calibration(data[1],float_to_bytes.val);
+    break;
   }
 }
 
@@ -196,17 +220,11 @@ uint8_t command_set_voltage_calibration(uint8_t cell_id, float value) {
 uint8_t command_set_temperature_calibration(uint8_t cell_id, float value) {
   return send_command(cell_id, cmdByte(COMMAND_set_temperature_calibration ), value);
 }
-uint8_t command_set_load_resistance(uint8_t cell_id, float value) {
-  return send_command(cell_id, cmdByte(COMMAND_set_load_resistance), value);
-}
 float cell_read_voltage_calibration(uint8_t cell_id) {
   return read_float_from_cell(cell_id, read_voltage_calibration);
 }
 float cell_read_temperature_calibration(uint8_t cell_id) {
   return read_float_from_cell(cell_id, read_temperature_calibration);
-}
-float cell_read_load_resistance(uint8_t cell_id) {
-  return read_float_from_cell(cell_id, read_load_resistance);
 }
 uint16_t cell_read_voltage(uint8_t cell_id) {
   return read_uint16_from_cell(cell_id, read_voltage);
@@ -262,7 +280,6 @@ void ReadModule(struct  cell_module *module) {
   ReadModuleQuick(module);
   module->voltageCalib = cell_read_voltage_calibration(module->address);
   module->temperatureCalib = cell_read_temperature_calibration(module->address);
-  module->loadResistance = cell_read_load_resistance(module->address);
 
   PrintModuleInfo(module);
 }
@@ -345,14 +362,12 @@ void PrintModuleInfo(struct  cell_module *module){
   Serial.print(module->address);
   Serial.print(" V:");
   Serial.print(module->voltage);
-  Serial.print(" VC:");
-  Serial.print(module->voltageCalib);
   Serial.print(" T:");
   Serial.print(module->temperature);
+  Serial.print(" VC:");
+  Serial.print(module->voltageCalib);
   Serial.print(" TC:");
   Serial.print(module->temperatureCalib);
-  Serial.print(" R:");
-  Serial.print(module->loadResistance);
   Serial.println("");
 }
 

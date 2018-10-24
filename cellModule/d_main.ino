@@ -9,13 +9,12 @@ void loop() {
   }
 
   //If we are on the default SLAVE address signalize it
-  if (currentConfig.SLAVE_ADDR == DEFAULT_SLAVE_ADDR) {
+  if (badConfiguration || currentConfig.SLAVE_ADDR == DEFAULT_SLAVE_ADDR) {
     green_pattern = GREEN_LED_PATTERN_UNCONFIGURED;
   } else {
     
     if (last_i2c_request == 0 && inPanicMode == false) {//go to panic mode, when timeout of I2C requests
-
-      previousLedState = green_pattern ;
+      
       green_pattern = GREEN_LED_PANIC;
       inPanicMode = true;
       //Try resetting the i2c bus
@@ -27,7 +26,6 @@ void loop() {
 
     if (last_i2c_request > 0 && inPanicMode == true) {//return from panic mode
       green_pattern = GREEN_LED_PATTERN_STANDARD;
-      green_pattern = previousLedState;
       inPanicMode = false;
     }
 
@@ -49,7 +47,10 @@ void requestEvent() {
       }
 
       break;
-
+    case READOUT_bypass_voltage_measurement:
+      sendUnsignedInt(voltageMeasurement_bypass);
+      break;
+      
     case READOUT_raw_voltage:
       sendUnsignedInt(last_raw_adc);
       break;
@@ -58,11 +59,7 @@ void requestEvent() {
       sendUnsignedInt(error_counter);
       break;
 
-    case READOUT_bypass_voltage_measurement:
-      sendUnsignedInt(voltageMeasurement_bypass);
-      break;
-
-    case READOUT_bypass_enabled_state:
+    case READOUT_bypass_state:
       sendByte(bypassEnabled);
       break;
 
@@ -76,10 +73,6 @@ void requestEvent() {
 
     case READOUT_temperature_calibration:
       sendFloat(currentConfig.tempSensorCalibration);
-      break;
-
-    case READOUT_load_resistance:
-      sendFloat(currentConfig.bypassResistance);
       break;
 
     default:
@@ -263,17 +256,6 @@ void receiveEvent(int bytesCnt) {
           //Only accept if its different
           if (newValue != currentConfig.tempSensorCalibration) {
             currentConfig.tempSensorCalibration = newValue;
-            WriteConfigToEEPROM();
-          }
-        }
-        break;
-
-      case COMMAND_set_load_resistance:
-        if (bytesCnt == sizeof(float)) {
-          float newValue = readFloat();
-          //Only accept if its different
-          if (newValue != currentConfig.bypassResistance) {
-            currentConfig.bypassResistance = newValue;
             WriteConfigToEEPROM();
           }
         }

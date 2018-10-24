@@ -62,7 +62,7 @@
 #define READOUT_temperature_calibration 13
 #define READOUT_raw_voltage 14
 #define READOUT_error_counter 15
-#define READOUT_bypass_enabled_state 16
+#define READOUT_bypass_state 16
 #define READOUT_bypass_voltage_measurement 17
 #define READOUT_load_resistance 18
 
@@ -77,10 +77,9 @@ volatile uint8_t tempReadingCnt = 0;
 volatile uint8_t cmdByte = 0;
 volatile uint8_t last_i2c_request = 255;
 
-
-uint8_t previousLedState = 0;
-volatile boolean ledFlash = false;
-volatile uint8_t green_pattern = GREEN_LED_PATTERN_STANDARD;
+volatile bool ledFlash = false;
+volatile bool badConfiguration = false;
+volatile uint8_t green_pattern = GREEN_LED_PATTERN_UNCONFIGURED;
 
 
 volatile uint16_t voltageMeasurement = 0;
@@ -101,8 +100,6 @@ struct cell_module_config {
   float voltageCalibration = 4.430;
   // Calibration factor for temp readings
   float tempSensorCalibration = 1.080;
-  // Resistance of bypass load
-  float bypassResistance = 2.0;
 };
 
 static cell_module_config currentConfig;
