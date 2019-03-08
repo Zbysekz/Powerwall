@@ -1,5 +1,7 @@
 #include "d_main.h"
 
+void initADC();
+
 static inline void initTimer1(void)
 {
   TCCR1 |= (1 << CTC1);  // clear timer on compare match
@@ -8,7 +10,7 @@ static inline void initTimer1(void)
   TIMSK |= (1 << OCIE1A); // enable compare match interrupt
 }
 void init_i2c() {
-  Wire.begin(myConfig.SLAVE_ADDR);
+  Wire.begin(currentConfig.SLAVE_ADDR);
   Wire.onRequest(requestEvent);
   Wire.onReceive(receiveEvent);
 }
@@ -34,13 +36,13 @@ void setup() {
   pinMode(PB4, OUTPUT); //PB4 = PIN 3
   digitalWrite(PB4, LOW);
 
-  ledGreen();
+  ledON();
   delay(500);
-  ledOff();
+  ledOFF();
 
   //Load our EEPROM configuration
   if (!LoadConfigFromEEPROM()) {
-    //Do something here for bad configuration??
+    badConfiguration = true;
   }
 
   cli();//stop interrupts
@@ -60,11 +62,74 @@ void setup() {
   // Enable Global Interrupts
   sei();
 
-  LEDReset();
+  green_pattern = GREEN_LED_PATTERN_STANDARD;
   wait_for_buffer_ready();
-  LEDReset();
 
   init_i2c();
 }
 
+void initADC()
+{
+  /* this function initialises the ADC
+        ADC Prescaler Notes:
+    --------------------
+     ADC Prescaler needs to be set so that the ADC input frequency is between 50 - 200kHz.
+           For more information, see table 17.5 "ADC Prescaler Selections" in
+           chapter 17.13.2 "ADCSRA – ADC Control and Status Register A"
+          (pages 140 and 141 on the complete ATtiny25/45/85 datasheet, Rev. 2586M–AVR–07/10)
+           Valid prescaler values for various clock speeds
+       Clock   Available prescaler values
+           ---------------------------------------
+             1 MHz   8 (125kHz), 16 (62.5kHz)
+             4 MHz   32 (125kHz), 64 (62.5kHz)
+             8 MHz   64 (125kHz), 128 (62.5kHz)
+            16 MHz   128 (125kHz)
+    ADPS2 ADPS1 ADPS0 Division Factor
+    000 2
+    001 2
+    010 4
+    011 8
+    100 16
+    101 32
+    110 64
+    111 128
+  */
 
+  //NOTE The device requries a supply voltage of 3V+ in order to generate 2.56V reference voltage.
+  // http://openenergymonitor.blogspot.co.uk/2012/08/low-level-adc-control-admux.html
+
+  //REFS1 REFS0 ADLAR REFS2 MUX3 MUX2 MUX1 MUX0
+  //Internal 2.56V Voltage Reference without external bypass capacitor, disconnected from PB0 (AREF)
+  //ADLAR =0 and PB3 (B0011) for INPUT (A3)
+  //We have to set the registers directly because the ATTINYCORE appears broken for internal 2v56 register without bypass capacitor
+  ADMUX = B10010011;
+
+  /*
+    ADMUX = (INTERNAL2V56_NO_CAP << 4) |
+          (0 << ADLAR)  |     // dont left shift ADLAR
+          (0 << MUX3)  |     // use ADC3 for input (PB4), MUX bit 3
+          (0 << MUX2)  |     // use ADC3 for input (PB4), MUX bit 2
+          (1 << MUX1)  |     // use ADC3 for input (PB4), MUX bit 1
+          (1 << MUX0);       // use ADC3 for input (PB4), MUX bit 0
+  */
+
+  /*
+    #if (F_CPU == 1000000)
+    //Assume 1MHZ clock so prescaler to 8 (B011)
+    ADCSRA =
+      (1 << ADEN)  |     // Enable ADC
+      (0 << ADPS2) |     // set prescaler bit 2
+      (1 << ADPS1) |     // set prescaler bit 1
+      (1 << ADPS0);      // set prescaler bit 0
+    #endif
+  */
+  //#if (F_CPU == 8000000)
+  //8MHZ clock so set prescaler to 64 (B110)
+  ADCSRA =
+    (1 << ADEN)  |     // Enable ADC
+    (1 << ADPS2) |     // set prescaler bit 2
+    (1 << ADPS1) |     // set prescaler bit 1
+    (0 << ADPS0) |       // set prescaler bit 0
+    (1 << ADIE);     //enable the ADC interrupt.
+  //#endif
+}

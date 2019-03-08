@@ -3,7 +3,7 @@ extern "C" {
 #endif
 
 void requestEvent();
-void receiveEvent(int howMany);
+void receiveEvent(int bytesCnt);
 
 #ifdef __cplusplus
 }
