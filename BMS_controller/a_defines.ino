@@ -1,39 +1,34 @@
 
-#include <ESP8266WiFi.h>
 
-// OLED display
-#include <Adafruit_GFX.h>
-#include <Adafruit_SSD1306.h>
+#include <U8x8lib.h> //https://github.com/olikraus/u8g2
 
-#include "wifiCredentials.h"
-
+#include <Ethernet.h>//for ethernet shield
 #include <Wire.h>
 #include <SPI.h>
 
-const char* ssid = WIFI_SSID;
-const char* password = WIFI_PSWD;
 
 // the IP address for the shield:
 IPAddress ip(192, 168, 0, 12);
-IPAddress gateway(192, 168, 0, 1);
-IPAddress subnet(255, 255, 255, 0);
+IPAddress ipServer(192, 168, 0, 3); 
 
-IPAddress ipServer(192, 168, 0, 3);  
+const byte mac[] = {0xDD, 0xAA, 0xBE, 0xEF, 0xFE, 0xED};
 
-WiFiClient wifiClient;
+EthernetClient ethClient;
 
-Adafruit_SSD1306 display;
+U8X8_SSD1306_128X64_NONAME_HW_I2C display;
 
-bool connectedToWifi = false;
-bool serverCommState = false;
-uint8_t i2cstatus;
-int cntRetryConnect=0,cntCommData=0,cntDelayAfterStart=0,cntScanModules=0,cntCalibData=30;
-float temp,pressure;
-int supplyVoltage;
-int i;
 
-#define RXBUFFSIZE 60
-#define RXQUEUESIZE 5
+bool xFullReadDone;
+//timers
+unsigned long tmrStartTime,tmrServerComm,tmrScanModules;
+//commands
+bool xCalibDataRequested;
+//statuses
+uint8_t status_i2c, status_eth;
+
+
+#define RXBUFFSIZE 20
+#define RXQUEUESIZE 3
 
 uint8_t rxBuffer[RXQUEUESIZE][RXBUFFSIZE];
 uint8_t rxBufferLen[RXQUEUESIZE];//>0 if command is inside, 0 is after it is proccessed
@@ -100,7 +95,6 @@ struct cell_module {
 #define MODULE_ADDRESS_RANGE_END (MODULE_ADDRESS_RANGE_START + MODULE_ADDRESS_RANGE_SIZE)
 
 
-
 cell_module moduleList[MODULE_ADDRESS_RANGE_SIZE];
 uint8_t modulesCount=0;
 
@@ -114,6 +108,3 @@ union {
   uint16_t val;
   uint8_t buffer[2];
 } uint16_t_to_bytes;
-
-
-

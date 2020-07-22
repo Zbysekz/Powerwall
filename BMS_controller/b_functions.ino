@@ -2,6 +2,20 @@
 void scan();
 uint8_t provision();
 void PrintModuleInfo(struct  cell_module *module);
+
+// ------------------------------------------- general -----------------------------------------------
+
+//function for creating periodic block code
+//returns true if period has passed, resetting the timer
+bool CheckTimer(unsigned long &timer, const unsigned long period){
+   if((unsigned long)(millis() - timer) >= period){//protected from rollover by type conversion
+    timer = millis();
+    return true;
+   }else{
+    return false;
+   }
+}
+
 // ----------------------------------- TCP communication stack ---------------------------------------
 
 int Send(uint8_t d[],uint8_t d_len){
@@ -22,10 +36,10 @@ int Send(uint8_t d[],uint8_t d_len){
   data[3+d_len]=crc/256;
   data[4+d_len]=crc%256;
   data[5+d_len]=222;//end byte
-
-  return wifiClient.write(data,6+d_len);
+  
+  return ethClient.write(data,6+d_len);
 }
-void ProcessReceived(uint8_t data[]){
+void ProcessReceivedData(uint8_t data[]){
   switch(data[0]){//by ID
     case 0:
       Serial.println("Hello world!");
@@ -63,10 +77,10 @@ void ProcessReceived(uint8_t data[]){
   }
 }
 
-void ProcessReceived(){
+void ProcessReceivedData(){
   for(int i=0;i<RXQUEUESIZE;i++)
     if(rxBufferLen[i]>0){
-      ProcessReceived(rxBuffer[i]);
+      ProcessReceivedData(rxBuffer[i]);
       rxBufferLen[i]=0;
     }
 }
@@ -122,6 +136,65 @@ void Receive(uint8_t rcv){
       break;
     }
 }
+
+void ExchangeCommunicationWithServer(){
+    Serial.println("Connecting to network...");
+  
+    int retCon = ethClient.connect(ipServer, 23);
+    if (retCon!=1) {
+          Serial.print("Connection to server failed! error code:");
+          Serial.println(retCon);
+    } else {
+
+      if(xCalibDataRequested){// calibration data
+          Serial.println("Sending calibration");
+          for(int i=0;i<modulesCount;i++){
+            PrintModuleInfo(&moduleList[i]);
+
+            float_to_bytes.val = moduleList[i].voltageCalib;
+
+            byte a = float_to_bytes.buffer[0];
+            byte b = float_to_bytes.buffer[1];
+            byte c = float_to_bytes.buffer[2];
+            byte d = float_to_bytes.buffer[3];
+            
+            float_to_bytes.val = moduleList[i].temperatureCalib;
+
+            byte e = float_to_bytes.buffer[0];
+            byte f = float_to_bytes.buffer[1];
+            byte g = float_to_bytes.buffer[2];
+            byte h = float_to_bytes.buffer[3];
+            
+            uint8_t sbuf[] = {41+i,(moduleList[i].address-MODULE_ADDRESS_RANGE_START+1)&0xFF,a,b,c,d,e,f,g,h};
+  
+            int cnt = Send(sbuf,10);
+            if(cnt<=0){
+              Serial.println("Write B failed!");
+            }
+          }
+
+        }else{ // normal data
+          for(int i=0;i<modulesCount;i++){
+            PrintModuleInfo(&moduleList[i]);
+            uint8_t sbuf[] = {11+i,(moduleList[i].address-MODULE_ADDRESS_RANGE_START+1)&0xFF,((moduleList[i].voltage)&0xFF00)>>8, (moduleList[i].voltage)&0xFF,((moduleList[i].temperature)&0xFF00)>>8, (moduleList[i].temperature)&0xFF};
+  
+            int cnt = Send(sbuf,8);
+            if(cnt<=0){
+              Serial.println("Write A failed!");
+            }
+          }
+      }
+
+      delay(50);//take some time for server to react even on the data that you just sent
+  
+      while(ethClient.available()){
+        uint8_t rcv = ethClient.read();
+        Receive(rcv);
+      }
+  
+      ethClient.stop();
+    }
+}
 // END -------------------------------- TCP communication stack ------------------------------------ END
 
 
@@ -172,19 +245,19 @@ uint8_t cmdByte(uint8_t cmd) {
 
 uint16_t read_uint16_from_cell(uint8_t cell_id, uint8_t cmd) {
   send_command(cell_id, cmd);
-  i2cstatus = Wire.requestFrom((uint8_t)cell_id, (uint8_t)2);
+  status_i2c = Wire.requestFrom((uint8_t)cell_id, (uint8_t)2);
   return (word((uint8_t)Wire.read(), (uint8_t)Wire.read()));
 }
 
 uint8_t read_uint8_t_from_cell(uint8_t cell_id, uint8_t cmd) {
   send_command(cell_id, cmd);
-  i2cstatus = Wire.requestFrom((uint8_t)cell_id, (uint8_t)1);
+  status_i2c = Wire.requestFrom((uint8_t)cell_id, (uint8_t)1);
   return (uint8_t)Wire.read();
 }
 
 float read_float_from_cell(uint8_t cell_id, uint8_t cmd) {
   send_command(cell_id, cmd);
-  i2cstatus = Wire.requestFrom((uint8_t)cell_id, (uint8_t)4);
+  status_i2c = Wire.requestFrom((uint8_t)cell_id, (uint8_t)4);
   float_to_bytes.buffer[0] = (uint8_t)Wire.read();
   float_to_bytes.buffer[1] = (uint8_t)Wire.read();
   float_to_bytes.buffer[2] = (uint8_t)Wire.read();
@@ -372,6 +445,3 @@ void PrintModuleInfo(struct  cell_module *module){
 }
 
 // END --------------------------------- Module operations ------------------------------------------ END
-
-
-
