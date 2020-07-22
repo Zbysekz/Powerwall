@@ -188,7 +188,7 @@ ISR(ADC_vect) {
 
     if (analogValIndex == OVERSAMPLE_LOOP) {
       analogValIndex = 0;
-      buffer_ready = 1;
+      buffer_ready = 1;// indicates first time ever valid data
     }
 
     tempReadingCnt++;

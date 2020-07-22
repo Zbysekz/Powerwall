@@ -134,9 +134,6 @@ float getVoltageMeasurement() {
   //Assume perfect reference of 2560mV for reference - we will correct for this with voltageCalibration
 
   uint16_t raw = (extraBits >> 4);
-  //TODO: DONT THINK WE NEED THIS ANY LONGER!
-  //unsigned int raw = map((extraBits >> 4), 0, 1023, 0, 2560);
 
-  //TODO: Get rid of the need for float variables....
   return (int)((float)raw * currentConfig.voltageCalibration);
 }

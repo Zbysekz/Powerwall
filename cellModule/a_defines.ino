@@ -105,6 +105,7 @@ struct cell_module_config {
 static cell_module_config currentConfig;
 
 
+//unions for byte conversion
 union {
   float val;
   uint8_t b[4];
@@ -114,4 +115,3 @@ union {
   uint16_t val;
   uint8_t b[2];
 } uint16_t_to_bytes;
-
