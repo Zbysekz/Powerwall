@@ -10,7 +10,9 @@ void loop() {
   ProcessReceivedData();
 
   //handle display logic
-  HandleDisplay();
+  if(CheckTimer(tmrDisplay, 100L)){
+    HandleDisplay();
+  }
 
   //scan modules
   if(CheckTimer(tmrScanModules, 5000L)){

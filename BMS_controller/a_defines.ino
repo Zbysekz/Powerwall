@@ -1,6 +1,6 @@
 
 
-#include <U8x8lib.h> //https://github.com/olikraus/u8g2
+#include <U8x8lib.h> //OLED display https://github.com/olikraus/u8g2
 
 #include <Ethernet.h>//for ethernet shield
 #include <Wire.h>
@@ -20,11 +20,12 @@ U8X8_SSD1306_128X64_NONAME_HW_I2C display;
 
 bool xFullReadDone;
 //timers
-unsigned long tmrStartTime,tmrServerComm,tmrScanModules;
+unsigned long tmrStartTime,tmrServerComm,tmrScanModules,tmrDisplay;
 //commands
 bool xCalibDataRequested;
 //statuses
 uint8_t status_i2c, status_eth;
+uint8_t errorCnt_dataCorrupt, errorCnt_CRCmismatch, errorCnt_BufferFull;
 
 
 #define RXBUFFSIZE 20
@@ -93,7 +94,6 @@ struct cell_module {
 #define MODULE_ADDRESS_RANGE_SIZE 24
 
 #define MODULE_ADDRESS_RANGE_END (MODULE_ADDRESS_RANGE_START + MODULE_ADDRESS_RANGE_SIZE)
-
 
 cell_module moduleList[MODULE_ADDRESS_RANGE_SIZE];
 uint8_t modulesCount=0;

@@ -39,7 +39,7 @@ int Send(uint8_t d[],uint8_t d_len){
   
   return ethClient.write(data,6+d_len);
 }
-void ProcessReceivedData(uint8_t data[]){
+void ProcessReceivedData(uint8_t data[], uint8_t length){
   switch(data[0]){//by ID
     case 0:
       Serial.println("Hello world!");
@@ -56,7 +56,7 @@ void ProcessReceivedData(uint8_t data[]){
       float_to_bytes.buffer[2]=data[4];
       float_to_bytes.buffer[3]=data[5];
       
-      Serial.print("Calibrating voltage for module:");
+      Serial.print(F("Calibrating voltage for module:"));
       Serial.println(data[1]);
       Serial.println(float_to_bytes.val);
       
@@ -68,7 +68,7 @@ void ProcessReceivedData(uint8_t data[]){
       float_to_bytes.buffer[2]=data[4];
       float_to_bytes.buffer[3]=data[5];
       
-      Serial.print("Calibrating temperature for module:");
+      Serial.print(F("Calibrating temperature for module:"));
       Serial.println(data[1]);
       Serial.println(float_to_bytes.val);
       
@@ -80,7 +80,7 @@ void ProcessReceivedData(uint8_t data[]){
 void ProcessReceivedData(){
   for(int i=0;i<RXQUEUESIZE;i++)
     if(rxBufferLen[i]>0){
-      ProcessReceivedData(rxBuffer[i]);
+      ProcessReceivedData(rxBuffer[i], rxBufferLen[i]);
       rxBufferLen[i]=0;
     }
 }
@@ -92,27 +92,35 @@ void Receive(uint8_t rcv){
       if(rcv==111){readState=1;}//start token
       break;
     case 1:
-      if(rcv==222)readState=2;else { Serial.write("ERR1");readState=0;}//second start token
+      if(rcv==222)readState=2;else { //second start token
+        if(errorCnt_dataCorrupt<255)errorCnt_dataCorrupt++; 
+        readState=0;
+      }
       break;
     case 2:
       rxLen = rcv;//length
-      if(rxLen>50){readState=0;Serial.write("ERR2");}else{ readState=3;
+      if(rxLen>RXBUFFSIZE){//should not be so long
+        readState=0;
+        if(errorCnt_dataCorrupt<255)errorCnt_dataCorrupt++; 
+      }else{ 
+        readState=3;
         rxPtr=0;
         crcReal=rxLen;
         //choose empty stack
         rxBufPtr=99;
-        for(int i=0;i<RXQUEUESIZE;i++)
+        for(int i=0;i<RXQUEUESIZE;i++){
           if(rxBufferLen[i]==0)
             rxBufPtr=i;
+        }
         if(rxBufPtr==99){
-          Serial.write("FULL BUFF!");
+          if(errorCnt_BufferFull<255)errorCnt_BufferFull++;
           readState=0;
         }
       }
       break;
-    case 3:
-      rxBuffer[rxBufPtr][rxPtr++] = rcv;//data
-      crcReal+=rcv;
+    case 3://receiving data itself
+      rxBuffer[rxBufPtr][rxPtr++] = rcv;
+      
       if(rxPtr>=RXBUFFSIZE || rxPtr>=rxLen){
         readState=4;
       }
@@ -124,30 +132,60 @@ void Receive(uint8_t rcv){
     case 5:
       crcL=rcv;//low crc
 
-      if(crcReal == crcL+(uint16_t)crcH*256){//crc check
+      if(CRC16(rxBuffer[rxBufPtr], rxLen) == crcL+(uint16_t)crcH*256){//crc check
         readState=6;
-      }else {readState=0;Serial.write("CRC MISMATCH!");}
+      }else {
+        readState=0;//CRC not match
+        if(errorCnt_CRCmismatch<255)errorCnt_CRCmismatch++;
+      }
       break;
     case 6:
       if(rcv==222){//end token
-        rxBufferLen[rxBufPtr]=rxLen;//set this packet to finished
-        readState=0;
-      }else readState=0;
+        rxBufferLen[rxBufPtr]=rxLen;//mark this packet as finished
+      }else{
+        if(errorCnt_dataCorrupt<255)errorCnt_dataCorrupt++; 
+      }
+      readState=0;
       break;
     }
 }
 
+//calculation of CRC16, corresponds to CRC-16/XMODEM on https://crccalc.com/﻿
+uint16_t CRC16(uint8_t* bytes, uint8_t length)
+{
+    const uint16_t generator = 0x1021; /* divisor is 16bit */
+    uint16_t crc = 0; /* CRC value is 16bit */
+
+    for (int b=0;b<length;b++)
+    {
+        crc ^= (uint16_t)(bytes[b] << 8); /* move byte into MSB of 16bit CRC */
+
+        for (int i = 0; i < 8; i++)
+        {
+            if ((crc & 0x8000) != 0) /* test for MSb = bit 15 */
+            {
+                crc = (uint16_t)((crc << 1) ^ generator);
+            }
+            else
+            {
+                crc <<= 1;
+            }
+        }
+    }
+    return crc;
+}
+
 void ExchangeCommunicationWithServer(){
-    Serial.println("Connecting to network...");
+    Serial.println(F("Connecting to network..."));
   
     int retCon = ethClient.connect(ipServer, 23);
     if (retCon!=1) {
-          Serial.print("Connection to server failed! error code:");
+          Serial.print(F("Connection to server failed! error code:"));
           Serial.println(retCon);
     } else {
 
       if(xCalibDataRequested){// calibration data
-          Serial.println("Sending calibration");
+          Serial.println(F("Sending calibration"));
           for(int i=0;i<modulesCount;i++){
             PrintModuleInfo(&moduleList[i]);
 
@@ -169,7 +207,7 @@ void ExchangeCommunicationWithServer(){
   
             int cnt = Send(sbuf,10);
             if(cnt<=0){
-              Serial.println("Write B failed!");
+              Serial.println(F("Write B failed!"));
             }
           }
 
@@ -180,7 +218,7 @@ void ExchangeCommunicationWithServer(){
   
             int cnt = Send(sbuf,8);
             if(cnt<=0){
-              Serial.println("Write A failed!");
+              Serial.println(F("Write A failed!"));
             }
           }
       }
@@ -377,18 +415,18 @@ bool PingModule(uint8_t address) {
   return false;
 }
 
-uint8_t Provision() {
+uint8_t Provision() {//finding cell modules with default addresses
 
-  Serial.println("Provisioning started");
+  Serial.println(F("Provisioning started"));
   if (PingModule(DEFAULT_SLAVE_ADDR))
   {
-    Serial.println("Module with default address exists");
+    Serial.println(F("Module with default address exists"));
     for (uint8_t address = MODULE_ADDRESS_RANGE_START; address <= MODULE_ADDRESS_RANGE_END; address++ )
     {
       if (PingModule(address) == false) {
         //We have found a gap
         command_set_slave_address(DEFAULT_SLAVE_ADDR, (uint8_t)address);
-        Serial.print("Successfuly assigned address:");
+        Serial.print(F("Successfuly assigned address:"));
         Serial.println(address);
         return address;
         break;
@@ -400,23 +438,23 @@ uint8_t Provision() {
 }
 
 void ScanI2C() {
-  Serial.println("Start scanning");
+  Serial.println(F("Start scanning"));
   for (uint8_t address = 1; address <= 127; address++ )
   {
     if (PingModule(address) == true) {
-      Serial.print("Found device! Address:");    
+      Serial.print(F("Found device! Address:"));    
       Serial.println(address);
     }
   }
-  Serial.println("End scanning.");
+  Serial.println(F("End scanning."));
 }
 void ScanModules() {
-  Serial.println("Scanning for modules");
+  Serial.println(F("Scanning for modules"));
   modulesCount=0;
   for (uint8_t address = MODULE_ADDRESS_RANGE_START; address <= MODULE_ADDRESS_RANGE_END; address++ )
   {
     if (PingModule(address) == true) {
-      Serial.print("Module discovered! Address:");    
+      Serial.print(F("Module discovered! Address:"));    
       Serial.println(address);
       
       moduleList[modulesCount].address = address;
@@ -431,17 +469,17 @@ void ScanModules() {
 }
 
 void PrintModuleInfo(struct  cell_module *module){
-  Serial.print("Address: ");
+  Serial.print(F("Address: "));
   Serial.print(module->address);
-  Serial.print(" V:");
+  Serial.print(F(" V:"));
   Serial.print(module->voltage);
-  Serial.print(" T:");
+  Serial.print(F(" T:"));
   Serial.print(module->temperature);
-  Serial.print(" VC:");
+  Serial.print(F(" VC:"));
   Serial.print(module->voltageCalib);
-  Serial.print(" TC:");
+  Serial.print(F(" TC:"));
   Serial.print(module->temperatureCalib);
-  Serial.println("");
+  Serial.println(F(""));
 }
 
 // END --------------------------------- Module operations ------------------------------------------ END

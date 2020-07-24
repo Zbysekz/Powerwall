@@ -7,20 +7,22 @@ void setup() {
   // Wait for serial to initialize.
   while(!Serial) { }
   
-  Serial.print("\nArduino Starting... ");
+  Serial.print(F("\nArduino Starting... "));
 
   Ethernet.begin(mac, ip);
 
   // Check for Ethernet hardware present
   if (Ethernet.hardwareStatus() == EthernetNoHardware) {
-    Serial.println("Ethernet shield was not found!");
-    while (true) {
-      //TODO SHOW message on display
-      delay(1); // do nothing, no point running without Ethernet hardware
-    }
+    Serial.println(F("Ethernet shield was not found!"));
+
+    display.clearDisplay();
+    display.print(F("HW eth not found!"));
+    status_eth=10;
+    while (true);// do nothing, no point running without Ethernet hardware
   }
   if (Ethernet.linkStatus() == LinkOFF) {
-    Serial.println("Ethernet cable is not connected.");
+    Serial.println(F("Ethernet cable is not connected."));
+    status_eth=20;
   }
 
   
