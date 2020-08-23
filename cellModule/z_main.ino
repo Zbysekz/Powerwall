@@ -1,4 +1,3 @@
-#include "d_main.h"
 
 void loop() {
   wdt_reset();

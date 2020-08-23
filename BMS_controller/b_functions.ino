@@ -39,8 +39,10 @@ int Send(uint8_t d[],uint8_t d_len){
   
   return ethClient.write(data,6+d_len);
 }
-void ProcessReceivedData(uint8_t data[], uint8_t length){
-  switch(data[0]){//by ID
+void ProcessReceivedData(uint8_t data[]){
+  int res=0;//aux temp
+  int len = data[0];
+  switch(data[1]){//by ID
     case 0:
       Serial.println("Hello world!");
     break;
@@ -49,44 +51,64 @@ void ProcessReceivedData(uint8_t data[], uint8_t length){
     break;
     case 2:
       Provision();
+      ScanModules();//and scan for them
     break;
     case 3: // set voltage calibration to specific cell
-      float_to_bytes.buffer[0]=data[2];
-      float_to_bytes.buffer[1]=data[3];
-      float_to_bytes.buffer[2]=data[4];
-      float_to_bytes.buffer[3]=data[5];
+      float_to_bytes.buffer[0]=data[3];
+      float_to_bytes.buffer[1]=data[4];
+      float_to_bytes.buffer[2]=data[5];
+      float_to_bytes.buffer[3]=data[6];
       
       Serial.print(F("Calibrating voltage for module:"));
-      Serial.println(data[1]);
+      Serial.println(data[2]);
       Serial.println(float_to_bytes.val);
       
-      command_set_voltage_calibration(data[1],float_to_bytes.val);
+      res= command_set_voltage_calibration(data[2],float_to_bytes.val);
+      if(res==0){
+        Serial.println(F("Success"));
+        ReadModules(false);//read all fully
+      }else{
+        Serial.print(F("Fail, error:"));
+        Serial.print(res);
+       }
     break;
     case 4: // set temperature calibration to specific cell
-      float_to_bytes.buffer[0]=data[2];
-      float_to_bytes.buffer[1]=data[3];
-      float_to_bytes.buffer[2]=data[4];
-      float_to_bytes.buffer[3]=data[5];
+      float_to_bytes.buffer[0]=data[3];
+      float_to_bytes.buffer[1]=data[4];
+      float_to_bytes.buffer[2]=data[5];
+      float_to_bytes.buffer[3]=data[6];
       
       Serial.print(F("Calibrating temperature for module:"));
-      Serial.println(data[1]);
+      Serial.println(data[2]);
       Serial.println(float_to_bytes.val);
       
-      command_set_temperature_calibration(data[1],float_to_bytes.val);
+      res = command_set_temperature_calibration(data[2],float_to_bytes.val);
+      if(res==0){
+        Serial.println(F("Success"));
+        ReadModules(false);//read all fully
+      }else{
+        Serial.print(F("Fail, error:"));
+        Serial.print(res);
+       }
+      
     break;
+    case 5:
+      uint16_t val = cell_read_raw_voltage(data[2]);
+      Serial.print(F("Read:"));
+      Serial.println(val);
+    
   }
 }
 
 void ProcessReceivedData(){
   for(int i=0;i<RXQUEUESIZE;i++)
-    if(rxBufferLen[i]>0){
-      ProcessReceivedData(rxBuffer[i], rxBufferLen[i]);
-      rxBufferLen[i]=0;
+    if(rxBufferMsgReady[i]==true){
+      ProcessReceivedData(rxBuffer[i]);
+      rxBufferMsgReady[i]=false;//mark as processed
     }
 }
 
 void Receive(uint8_t rcv){
-  
     switch(readState){
     case 0:
       if(rcv==111){readState=1;}//start token
@@ -109,19 +131,21 @@ void Receive(uint8_t rcv){
         //choose empty stack
         rxBufPtr=99;
         for(int i=0;i<RXQUEUESIZE;i++){
-          if(rxBufferLen[i]==0)
+          if(rxBufferMsgReady[i]==false)
             rxBufPtr=i;
         }
         if(rxBufPtr==99){
           if(errorCnt_BufferFull<255)errorCnt_BufferFull++;
           readState=0;
+        }else{
+          rxBuffer[rxBufPtr][rxPtr++]=rxLen;//at the start is length
         }
       }
       break;
     case 3://receiving data itself
       rxBuffer[rxBufPtr][rxPtr++] = rcv;
       
-      if(rxPtr>=RXBUFFSIZE || rxPtr>=rxLen){
+      if(rxPtr>=RXBUFFSIZE || rxPtr>=rxLen+1){
         readState=4;
       }
       break;
@@ -132,7 +156,7 @@ void Receive(uint8_t rcv){
     case 5:
       crcL=rcv;//low crc
 
-      if(CRC16(rxBuffer[rxBufPtr], rxLen) == crcL+(uint16_t)crcH*256){//crc check
+      if(CRC16(rxBuffer[rxBufPtr], rxLen+1) == crcL+(uint16_t)crcH*256){//crc check
         readState=6;
       }else {
         readState=0;//CRC not match
@@ -141,7 +165,7 @@ void Receive(uint8_t rcv){
       break;
     case 6:
       if(rcv==222){//end token
-        rxBufferLen[rxBufPtr]=rxLen;//mark this packet as finished
+        rxBufferMsgReady[rxBufPtr]=true;//mark this packet as finished
       }else{
         if(errorCnt_dataCorrupt<255)errorCnt_dataCorrupt++; 
       }
@@ -176,8 +200,7 @@ uint16_t CRC16(uint8_t* bytes, uint8_t length)
 }
 
 void ExchangeCommunicationWithServer(){
-    Serial.println(F("Connecting to network..."));
-  
+ 
     int retCon = ethClient.connect(ipServer, 23);
     if (retCon!=1) {
           Serial.print(F("Connection to server failed! error code:"));
@@ -395,6 +418,8 @@ void ReadModule(struct  cell_module *module) {
   PrintModuleInfo(module);
 }
 void ReadModules(bool quick) {
+  Serial.print(F("Reading all modulues"));
+  Serial.println(quick?F(" quickly"):F(" fully"));
   for(uint8_t i=0;i<modulesCount;i++){
     if(moduleList[i].address!=0){
       if(quick)

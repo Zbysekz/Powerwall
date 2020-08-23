@@ -125,15 +125,15 @@ void bypass_off() {
 
 
 float getVoltageMeasurement() {
-  //Oversampling and take average of ADC samples use an unsigned integer or the bit shifting goes wonky
-  uint32_t extraBits = 0;
+  //Oversampling and take average of ADC samples use an unsigned integer
+  uint32_t sum = 0;
   for (int k = 0; k < OVERSAMPLE_LOOP; k++) {
-    extraBits = extraBits + analogVal[k];
+    sum += analogVal[k];
   }
   //Shift the bits to match OVERSAMPLE_LOOP size (buffer size of 8=3 shifts, 16=4 shifts)
   //Assume perfect reference of 2560mV for reference - we will correct for this with voltageCalibration
 
-  uint16_t raw = (extraBits >> 4);
+  uint16_t raw = (uint16_t)(sum / OVERSAMPLE_LOOP);
 
-  return (int)((float)raw * currentConfig.voltageCalibration);
+  return (uint16_t)((float)raw * currentConfig.voltageCalibration);
 }

@@ -1,5 +1,3 @@
-#include "d_main.h"
-
 void initADC();
 
 static inline void initTimer1(void)

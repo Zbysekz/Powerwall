@@ -1,6 +1,6 @@
 
 
-#include <U8x8lib.h> //OLED display https://github.com/olikraus/u8g2
+#include <U8x8lib.h> //OLED display https://github.com/olikraus/u8g2 (U8G2 in library manager)
 
 #include <Ethernet.h>//for ethernet shield
 #include <Wire.h>
@@ -31,8 +31,8 @@ uint8_t errorCnt_dataCorrupt, errorCnt_CRCmismatch, errorCnt_BufferFull;
 #define RXBUFFSIZE 20
 #define RXQUEUESIZE 3
 
-uint8_t rxBuffer[RXQUEUESIZE][RXBUFFSIZE];
-uint8_t rxBufferLen[RXQUEUESIZE];//>0 if command is inside, 0 is after it is proccessed
+uint8_t rxBuffer[RXQUEUESIZE][RXBUFFSIZE];//for first item if >0 command is inside, 0 after it is proccessed
+bool rxBufferMsgReady[RXQUEUESIZE];
 uint8_t rxLen,crcH,crcL,readState,rxPtr,rxBufPtr=0;
 uint16_t crcReal;
 
