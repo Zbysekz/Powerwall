@@ -1,14 +1,14 @@
 
 void ScanI2C() {
-  Serial.println(F("Start scanning"));
+  Log(F("Start scanning"));
   for (uint8_t address = 1; address <= 127; address++ )
   {
     if (PingModule(address) == true) {
-      Serial.print(F("Found device! Address:"));    
-      Serial.println(address);
+      Log(F("Found device! Address:"));    
+      Log(address);
     }
   }
-  Serial.println(F("End scanning."));
+  Log(F("End scanning."));
 }
 
 uint8_t  send_command(uint8_t cell_id, uint8_t cmd) {

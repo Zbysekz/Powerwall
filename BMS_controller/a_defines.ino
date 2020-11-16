@@ -5,7 +5,8 @@
 #include <Ethernet.h>//for ethernet shield
 #include <Wire.h>
 #include <SPI.h>
-
+#include <SD.h>
+#include <avr/wdt.h>
 
 // the IP address for the shield:
 IPAddress ip(192, 168, 0, 12);
@@ -105,6 +106,7 @@ struct cell_module {
 cell_module moduleList[MODULE_ADDRESS_RANGE_SIZE];
 uint8_t modulesCount=0;
 
+uint8_t iSDcardError;
 
 union {
   float val;

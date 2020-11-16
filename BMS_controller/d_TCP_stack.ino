@@ -25,7 +25,7 @@ void ProcessReceivedData(uint8_t data[]){
   int len = data[0];
   switch(data[1]){//by ID
     case 0:
-      Serial.println("Hello world!");
+      Log(F("Hello world!"));
     break;
     case 1:
       ScanI2C();
@@ -45,17 +45,16 @@ void ProcessReceivedData(uint8_t data[]){
       float_to_bytes.buffer[2]=data[5];
       float_to_bytes.buffer[3]=data[6];
       
-      Serial.print(F("Calibrating voltage for module:"));
-      Serial.println(data[2]);
-      Serial.println(float_to_bytes.val,3);
+      Log(F("Calibrating voltage for module:"));
+      Log(data[2]);
       
       res= command_set_voltage_calibration(data[2],float_to_bytes.val);
       if(res==0){
-        Serial.println(F("Success"));
+        Log(F("Success"));
         ReadModules(false);//read all fully
       }else{
-        Serial.print(F("Fail, error:"));
-        Serial.print(res);
+        Log(F("Fail, error:"));
+        Log(res);
        }
     break;
     case 5: // set temperature calibration to specific cell
@@ -64,24 +63,23 @@ void ProcessReceivedData(uint8_t data[]){
       float_to_bytes.buffer[2]=data[5];
       float_to_bytes.buffer[3]=data[6];
       
-      Serial.print(F("Calibrating temperature for module:"));
-      Serial.println(data[2]);
-      Serial.println(float_to_bytes.val,3);
+      Log(F("Calibrating temperature for module:"));
+      Log(data[2]);
       
       res = command_set_temperature_calibration(data[2],float_to_bytes.val);
       if(res==0){
-        Serial.println(F("Success"));
+        Log(F("Success"));
         ReadModules(false);//read all fully
       }else{
-        Serial.print(F("Fail, error:"));
-        Serial.print(res);
+        Log(F("Fail, error:"));
+        Log(res);
        }
       
     break;
     case 6:
       uint16_t val = cell_read_raw_voltage(data[2]);
-      Serial.print(F("Read:"));
-      Serial.println(val);
+      Log(F("Read:"));
+      Log(val);
     break;
     case 7:
       ConnectBattery();
@@ -195,14 +193,14 @@ void ExchangeCommunicationWithServer(){
 
     int retCon = ethClient.connect(ipServer, 23);
     if (retCon!=1) {
-          Serial.print(F("Connection to server failed! error code:"));
-          Serial.println(retCon);
+          Log(F("Connection to server failed! error code:"));
+          Log(retCon);
           status_eth = 30;
     } else {
        status_eth = 1;//ok status
 
       if(xCalibDataRequested){// calibration data
-          Serial.println(F("Sending calibration"));
+          Log(F("Sending calibration"));
           for(int i=0;i<modulesCount;i++){
             PrintModuleInfo(&moduleList[i]);
 
@@ -224,7 +222,7 @@ void ExchangeCommunicationWithServer(){
   
             int cnt = Send(sbuf,10);
             if(cnt<=0){
-              Serial.println(F("Sending calibration failed!"));
+              Log(F("Sending calibration failed!"));
             }
           }
 
@@ -235,7 +233,7 @@ void ExchangeCommunicationWithServer(){
 
             int cnt = Send(sbuf,6);
             if(cnt<=0){
-              Serial.println(F("Sending data failed!"));
+              Log(F("Sending data failed!"));
             } 
           }
       }

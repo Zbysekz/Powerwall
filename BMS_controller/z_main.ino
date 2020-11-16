@@ -1,6 +1,8 @@
 
 void loop() {
 
+  wdt_reset();
+  
   //periodically connect to the server and exchange data
   if(CheckTimer(tmrServerComm, 10000L)){
     ExchangeCommunicationWithServer();

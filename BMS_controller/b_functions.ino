@@ -133,3 +133,25 @@ void PrintModuleInfo(struct  cell_module *module){
 }
 
 // END --------------------------------- Module operations ------------------------------------------ END
+
+void Log(String str){
+  // open the file. note that only one file can be open at a time,
+  // so you have to close this one before opening another.
+  File logFile = SD.open("log.txt", (O_APPEND | O_WRITE));
+
+  // if the file opened okay, write to it:
+  if (logFile) {
+    Serial.println(str);
+    logFile.println(str);
+    // close the file:
+    logFile.close();
+  } else {
+    // if the file didn't open, print an error:
+    Serial.println("error opening log.txt!");
+    iSDcardError = 2;
+  }
+}
+
+void Log(int intStr){
+  Log(String(intStr));
+}
