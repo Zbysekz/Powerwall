@@ -1,5 +1,5 @@
 void HandleDisplay(){
-  
+  if(!displayOk)return;
   display.home();
 
   if(CheckTimer(tmrPageChange, 5000L)){

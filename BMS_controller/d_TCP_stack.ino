@@ -9,12 +9,10 @@ int Send(uint8_t d[],uint8_t d_len){
 
   for(int i=0;i<d_len;i++)
     data[3+i]=d[i];//data
-  
-  int crc = 0;
-  for(int i=0;i<d_len+1;i++)
-    crc+=data[2+i];
 
-  data[3+d_len]=crc/256;
+  uint16_t crc = CRC16(data+2, d_len+1);
+  
+  data[3+d_len]=uint8_t(crc/256);
   data[4+d_len]=crc%256;
   data[5+d_len]=222;//end byte
 
@@ -23,9 +21,11 @@ int Send(uint8_t d[],uint8_t d_len){
 void ProcessReceivedData(uint8_t data[]){
   int res=0;//aux temp
   int len = data[0];
+  uint16_t auxVal = 0;
+  
   switch(data[1]){//by ID
-    case 0:
-      Serial.println("Hello world!");
+    case 0://patern
+      Cell_green_led_pattern(data[2], data[3]);
     break;
     case 1:
       ScanI2C();
@@ -49,7 +49,7 @@ void ProcessReceivedData(uint8_t data[]){
       Serial.println(data[2]);
       Serial.println(float_to_bytes.val,3);
       
-      res= command_set_voltage_calibration(data[2],float_to_bytes.val);
+      res= Cell_set_voltage_calibration(data[2],float_to_bytes.val);
       if(res==0){
         Serial.println(F("Success"));
         ReadModules(false);//read all fully
@@ -68,7 +68,7 @@ void ProcessReceivedData(uint8_t data[]){
       Serial.println(data[2]);
       Serial.println(float_to_bytes.val,3);
       
-      res = command_set_temperature_calibration(data[2],float_to_bytes.val);
+      res = Cell_set_temperature_calibration(data[2],float_to_bytes.val);
       if(res==0){
         Serial.println(F("Success"));
         ReadModules(false);//read all fully
@@ -79,16 +79,28 @@ void ProcessReceivedData(uint8_t data[]){
       
     break;
     case 6:
-      uint16_t val = cell_read_raw_voltage(data[2]);
+      auxVal = Cell_read_raw_voltage(data[2]);
       Serial.print(F("Read:"));
-      Serial.println(val);
+      Serial.println(auxVal);
     break;
     case 7:
-      ConnectBattery();
+      if(len==3){
+        Serial.println(F("Setting new address"));
+        Cell_set_slave_address(data[2],data[3]);
+      }
      break;
-    case 8:
-      DisconnectBattery();
+    case 10:
+      xConnectBattery = true;
+     break;
+    case 11:
+      xDisconnectBattery = true;
       break;
+    case 12:
+      xResetRequested = true;
+      break;
+    default:
+      Serial.println(F("Not defined command"));
+      
   }
 }
 

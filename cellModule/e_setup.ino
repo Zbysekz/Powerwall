@@ -38,9 +38,15 @@ void setup() {
   delay(500);
   ledOFF();
 
+  green_pattern = GREEN_LED_PATTERN_STANDARD;
+    
   //Load our EEPROM configuration
   if (!LoadConfigFromEEPROM()) {
     badConfiguration = true;
+  }
+  if (badConfiguration || currentConfig.SLAVE_ADDR == DEFAULT_SLAVE_ADDR) {
+    green_pattern = GREEN_LED_PATTERN_UNCONFIGURED;
+    currentConfig.SLAVE_ADDR = DEFAULT_SLAVE_ADDR;//need to be here, compiler probably doesn't init struct properly
   }
 
   cli();//stop interrupts
@@ -60,10 +66,10 @@ void setup() {
   // Enable Global Interrupts
   sei();
 
-  green_pattern = GREEN_LED_PATTERN_STANDARD;
   wait_for_buffer_ready();
 
   init_i2c();
+  
 }
 
 void initADC()
