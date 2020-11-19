@@ -1,16 +1,14 @@
 
 void loop() {
   wdt_reset();
-
+  
   if (last_i2c_request > 0) {
     //Count down loop for requests to see if i2c bus hangs or controller stops talking
     last_i2c_request--;
   }
 
   //If we are on the default SLAVE address signalize it
-  if (badConfiguration || currentConfig.SLAVE_ADDR == DEFAULT_SLAVE_ADDR) {
-    green_pattern = GREEN_LED_PATTERN_UNCONFIGURED;
-  } else {
+  if (!badConfiguration && currentConfig.SLAVE_ADDR != DEFAULT_SLAVE_ADDR) {
     HandlePanicMode();//reset i2c bus if no communication goin on for some time
   }
 
@@ -43,14 +41,13 @@ void HandlePanicMode(){
 ISR(TIMER1_COMPA_vect) // timer interrupt
 {
   /////////////////Flash LED in sync with bit pattern
-  if (green_pattern == 0) {
+  if (green_pattern == 0) {//if not showing any pattern
     if (ledFlash)  {
       ledON();
-    }
+    }else ledOFF();
     ledFlash = false;
   } else {
-    ///Rotate pattern
-    green_pattern = (byte)(green_pattern << 1) | (green_pattern >> 7);
+    green_pattern = (byte)(green_pattern << 1) | (green_pattern >> 7);//rotate pattern left
 
     if (green_pattern & 0x01) {
       ledON();

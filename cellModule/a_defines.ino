@@ -33,9 +33,9 @@
 //Default i2c SLAVE address (used for auto provision of address)
 #define DEFAULT_SLAVE_ADDR 21
 
-//Configured cell modules use i2c addresses 24 to 48 (24S)
-#define DEFAULT_SLAVE_ADDR_START_RANGE 24
-#define DEFAULT_SLAVE_ADDR_END_RANGE DEFAULT_SLAVE_ADDR_START_RANGE + 24
+//Configured cell modules use i2c addresses 24 to 36 (12S)
+#define SLAVE_ADDR_START_RANGE 24
+#define SLAVE_ADDR_END_RANGE SLAVE_ADDR_START_RANGE + 12
 
 //Number of times we sample and average the ADC for voltage
 #define OVERSAMPLE_LOOP 16

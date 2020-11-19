@@ -12,23 +12,13 @@ bool CheckTimer(unsigned long &timer, const unsigned long period){
    }
 }
 
-void ConnectBattery(){
-  if(status_i2c==1 && status_eth==1 && modulesCount==REQUIRED_CNT_MODULES){
-    digitalWrite(PIN_MAIN_RELAY, true);
-  }
-}
-
-void DisconnectBattery(){
-    digitalWrite(PIN_MAIN_RELAY, false);
-}
-
 // ------------------------------------ Module operations -----------------------------------------------
 
 void ReadModuleQuick(struct  cell_module *module) {
-  module->voltage = cell_read_voltage(module->address);
-  module->temperature = cell_read_board_temp(module->address);
+  module->voltage = Cell_read_voltage(module->address);
+  module->temperature = Cell_read_board_temp(module->address);
 
-  if (module->voltage >= 0 && module->voltage <= 5000) {
+  if (module->voltage >= 0 && module->voltage <= 5000 && module->temperature > 0 && module->temperature < 600) {
 
     if ( module->voltage > module->maxVoltage ) {
       module->maxVoltage = module->voltage;
@@ -45,8 +35,8 @@ void ReadModuleQuick(struct  cell_module *module) {
 
 void ReadModule(struct  cell_module *module) {
   ReadModuleQuick(module);
-  module->voltageCalib = cell_read_voltage_calibration(module->address);
-  module->temperatureCalib = cell_read_temperature_calibration(module->address);
+  module->voltageCalib = Cell_read_voltage_calibration(module->address);
+  module->temperatureCalib = Cell_read_temperature_calibration(module->address);
 
   PrintModuleInfo(module);
 }
@@ -56,6 +46,8 @@ void ReadModules(bool quick) {
   Serial.println(quick?F(" quickly"):F(" fully"));
   for(uint8_t i=0;i<modulesCount;i++){
     if(moduleList[i].address!=0){
+      Serial.print("read");
+      Serial.println(i);
       if(quick)
         ReadModuleQuick(&moduleList[i]);
       else
@@ -84,7 +76,7 @@ uint8_t Provision() {//finding cell modules with default addresses
     {
       if (PingModule(address) == false) {
         //We have found a gap
-        command_set_slave_address(DEFAULT_SLAVE_ADDR, (uint8_t)address);
+        Cell_set_slave_address(DEFAULT_SLAVE_ADDR, (uint8_t)address);
         Serial.print(F("Successfuly assigned address:"));
         Serial.println(address);
         return address;

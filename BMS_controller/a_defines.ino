@@ -5,6 +5,7 @@
 #include <Ethernet.h>//for ethernet shield
 #include <Wire.h>
 #include <SPI.h>
+#include <avr/wdt.h>
 
 
 // the IP address for the shield:
@@ -36,14 +37,26 @@ uint8_t rxBuffer[RXQUEUESIZE][RXBUFFSIZE];//for first item if >0 command is insi
 bool rxBufferMsgReady[RXQUEUESIZE];
 uint8_t rxLen,crcH,crcL,readState,rxPtr,rxBufPtr=0;
 uint16_t crcReal;
+bool displayOk;
 
 //---------------------- SYSTEM PARAMETERS ---------------------------------------------------------
 #define REQUIRED_CNT_MODULES 6
 
+#define REQUIRED_RACK_TEMPERATURE 270 //0,1°C
+
+//discharging voltage range
+#define DISCHARGE_VOLT_LOW 330 //x10mV
+#define DISCHARGE_VOLT_HIGH 420 //x10mV
+//charge voltage range
+#define CHARGE_VOLT_LOW 290 //xmV
+#define CHARGE_VOLT_HIGH 410 //xmV
+
 //---------------------- PIN DEFINITIONS -----------------------------------------------------------
 
 #define PIN_MAIN_RELAY 5
-#define PIN_HEATING 4
+#define PIN_HEATING 2
+
+#define PIN_UPS_BTN 7
 
 //--------------------------------------------------------------------------------------------------
 
@@ -75,8 +88,8 @@ uint16_t crcReal;
 struct cell_module {
   // 7 bit slave I2C address
   uint8_t address; //module address
-  uint16_t voltage;//voltage [mV]
-  uint16_t temperature;//temperature of NTC sensor [°C]
+  uint16_t voltage;//voltage [10mV]
+  uint16_t temperature;//temperature of PTC sensor [0,1°C]
   
   float voltageCalib;//voltage calibration offset constant
   float temperatureCalib;//temperature calibration offset constant
@@ -95,16 +108,23 @@ struct cell_module {
 //Default i2c SLAVE address (used for auto provision of address)
 #define DEFAULT_SLAVE_ADDR 21
 
-//Configured cell modules use i2c addresses 24 to 48 (24S)
+//Configured cell modules use i2c addresses 24 to 36 (12S)
 //See http://www.i2c-bus.org/addressing/
 #define MODULE_ADDRESS_RANGE_START 24
-#define MODULE_ADDRESS_RANGE_SIZE 24
+#define MODULE_ADDRESS_RANGE_SIZE 12
 
 #define MODULE_ADDRESS_RANGE_END (MODULE_ADDRESS_RANGE_START + MODULE_ADDRESS_RANGE_SIZE)
 
 cell_module moduleList[MODULE_ADDRESS_RANGE_SIZE];
 uint8_t modulesCount=0;
 
+//HEATING
+bool xHeating;
+
+//StateMachine
+uint8_t stateMachineStatus;
+unsigned long tmrDelay;
+bool xConnectBattery,xDisconnectBattery,xResetRequested;
 
 union {
   float val;

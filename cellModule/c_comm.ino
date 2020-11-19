@@ -63,7 +63,7 @@ void receiveEvent(int bytesCnt) {
   cmdByte = Wire.read();
   bytesCnt--;
 
-  //Is it a command byte (there are other bytes to process) or not?
+  //Is it a command
   if (bitRead(cmdByte, COMMAND_BIT)) {
 
     bitClear(cmdByte, COMMAND_BIT);
@@ -118,7 +118,7 @@ void receiveEvent(int bytesCnt) {
             bypassEnabled = true;
           } else {
             //Disable
-            bypass_off();millis();
+            bypass_off();
           }
         }
         break;
@@ -129,7 +129,7 @@ void receiveEvent(int bytesCnt) {
         if (bytesCnt == 1 ) {
           uint8_t newAddress = Wire.read();
           //Only accept if its a different address
-          if (newAddress != currentConfig.SLAVE_ADDR && newAddress >= DEFAULT_SLAVE_ADDR_START_RANGE && newAddress <= DEFAULT_SLAVE_ADDR_END_RANGE) {
+          if (newAddress != currentConfig.SLAVE_ADDR && newAddress >= SLAVE_ADDR_START_RANGE && newAddress <= SLAVE_ADDR_END_RANGE) {
             currentConfig.SLAVE_ADDR = newAddress;
             WriteConfigToEEPROM();
             Reboot();
