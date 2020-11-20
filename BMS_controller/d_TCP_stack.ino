@@ -91,12 +91,15 @@ void ProcessReceivedData(uint8_t data[]){
      break;
     case 10:
       xConnectBattery = true;
+      Serial.println(F("Connect BATTERY CMD"));
      break;
     case 11:
       xDisconnectBattery = true;
+      Serial.println(F("Disconnect BATTERY CMD"));
       break;
     case 12:
       xResetRequested = true;
+      Serial.println(F("Reset BATTERY CMD"));
       break;
     default:
       Serial.println(F("Not defined command"));

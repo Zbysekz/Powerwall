@@ -1,6 +1,7 @@
 void HandleDisplay(){
   if(!displayOk)return;
   display.home();
+  Serial.println(F("After home"));
 
   if(CheckTimer(tmrPageChange, 5000L)){
     if(showPage<1)showPage++;else showPage=0;
@@ -16,8 +17,6 @@ void HandleDisplay(){
     break;
   }
 
-   
-  
   /*char str[3];
   itoa(55, str, 10);
   display.drawString(0,0,str);*/
