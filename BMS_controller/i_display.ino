@@ -53,3 +53,7 @@ void ModuleStats(){
     display.println(moduleList[i].temperature/10.0,1);
   }
 }
+
+bool InitDisplay(){
+  
+}

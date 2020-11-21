@@ -25,9 +25,14 @@ void loop() {
 
   
   if(CheckTimer(tmrScanModules, 5000L)){//read modules periodically
-    Serial.println("Perioda!!!!--------");
-    ReadModules(true);//quick read
-    Serial.println("reading done");
+    
+    if(ReadModules(true))//quick read
+      status_i2c = 1;//ok
+    else{
+      Serial.println("Error in scanning modules");
+      status_i2c = 2;//error in reading
+    }
+
   }
 
 
@@ -62,7 +67,9 @@ void ControlHeating(){
   else
     actualTemp=0;
 
-  Serial.println(F("ActualTemp:"));
+  Serial.print(F("\nModules:"));
+  Serial.println(modulesCount);
+  Serial.print(F("\nActualTemp:"));
   Serial.println(actualTemp);
 
   if(cnt>0){
@@ -97,6 +104,7 @@ void PowerStateMachine(){
     case 0://IDLE
       digitalWrite(PIN_MAIN_RELAY, false);
       digitalWrite(PIN_UPS_BTN, false);    
+      
 
       if(xSafetyConditions && xConnectBattery){
         digitalWrite(PIN_MAIN_RELAY, true);
@@ -106,19 +114,30 @@ void PowerStateMachine(){
       }
       
     break;
+    
+    // UPS can be after start in "sleep" mode, alternating between "On-Line" and "overload" LEDs
+    // this happens usually when battery is cut off in run. We need to push start button three times to start UPS realiably
+  
     case 1://WAIT TO CONTACTOR
       if(CheckTimer(tmrDelay, 1000L)){
-        digitalWrite(PIN_UPS_BTN, true);
+        digitalWrite(PIN_UPS_BTN, true);//push start button for short time
+        delay(200);
+        digitalWrite(PIN_UPS_BTN, false);
         tmrDelay=millis();
         stateMachineStatus = 2;
-        Serial.println(F("UPS start-----"));
       }
     break;
-    case 2://WAIT START BUTTON
-      if(CheckTimer(tmrDelay, 2000L)){
+    case 2://WAIT PAUSE
+      if(CheckTimer(tmrDelay, 1000L)){
+        tmrDelay=millis();
+        digitalWrite(PIN_UPS_BTN, true);
+        stateMachineStatus = 3;
+      }
+    break;
+    case 3://WAIT LONG START BUTTON
+      if(CheckTimer(tmrDelay, 2500L)){
         digitalWrite(PIN_UPS_BTN, false);
         stateMachineStatus = 10;
-        Serial.println(F("UPS done-----"));
       }
     break;
     case 10://RUN

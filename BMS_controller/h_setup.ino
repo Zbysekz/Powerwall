@@ -26,13 +26,13 @@ void setup() {
 
   ////////////////////////////////////////LCD/////////////////////////////////////////////////
     Serial.print(F("\nLCD init "));
-  if(display.begin()){// for ESP display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr 0x3D (for the 128x64)
+  /*if(display.begin()){// for ESP display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr 0x3D (for the 128x64)
     
     // Clear the buffer.
     display.clearDisplay();
     display.setFont(u8x8_font_chroma48medium8_r);
     displayOk=true;
-  }
+  }*/
   ////////////////////////////////////////////////////////////////////////////////////////////
   
   ////////////
@@ -55,10 +55,12 @@ void setup() {
   }
 
   
-  Wire.setTimeout(1000);  //1000ms timeout
-  Wire.setClock(100000);  //100khz
-  //Wire.begin(5,0); // I2C -- SDA GPIO5, SCL GPIOO /if we are using LCD it is already initialized  
-  
+  //Wire.setTimeout(1000);  //1000ms timeout
+  //Wire.setClock(100000);  //100khz
+  I2c.begin();//5,0); // I2C -- SDA GPIO5, SCL GPIOO /if we are using LCD it is already initialized  
+  I2c.setSpeed(false);//100kHz
+  I2c.pullup(false);// no pullups
+  I2c.timeOut(1000);//1000ms timeout
   Serial.println(F("\nSetup finished."));
 
   tmrStartTime = millis();
@@ -68,6 +70,5 @@ void setup() {
     Serial.println(F("OTA MODE"));
     OTAmode=1;
   }*/
-
   stateMachineStatus=0;
 }

@@ -25,7 +25,11 @@ void ProcessReceivedData(uint8_t data[]){
   
   switch(data[1]){//by ID
     case 0://patern
-      Cell_green_led_pattern(data[2], data[3]);
+      Serial.print(F("\nLED pattern:"));
+      if(!Cell_green_led_pattern(data[2], data[3]))
+        Serial.println(F("failed"));
+      else
+        Serial.println(F("ok"));
     break;
     case 1:
       ScanI2C();
@@ -79,9 +83,10 @@ void ProcessReceivedData(uint8_t data[]){
       
     break;
     case 6:
-      auxVal = Cell_read_raw_voltage(data[2]);
-      Serial.print(F("Read:"));
-      Serial.println(auxVal);
+      if(Cell_read_raw_voltage(data[2], auxVal)){
+        Serial.print(F("Read:"));
+        Serial.println(auxVal);
+      }
     break;
     case 7:
       if(len==3){
@@ -124,13 +129,15 @@ void Receive(uint8_t rcv){
       if(rcv==222)readState=2;else { //second start token
         if(errorCnt_dataCorrupt<255)errorCnt_dataCorrupt++; 
         readState=0;
+        Serial.println(F("RxErr0"));
       }
       break;
     case 2:
       rxLen = rcv;//length
       if(rxLen>RXBUFFSIZE){//should not be so long
         readState=0;
-        if(errorCnt_dataCorrupt<255)errorCnt_dataCorrupt++; 
+        if(errorCnt_dataCorrupt<255)errorCnt_dataCorrupt++;
+        Serial.println(F("RxErr1")); 
       }else{ 
         readState=3;
         rxPtr=0;
@@ -143,6 +150,7 @@ void Receive(uint8_t rcv){
         }
         if(rxBufPtr==99){
           if(errorCnt_BufferFull<255)errorCnt_BufferFull++;
+           Serial.println(F("RxErr2"));
           readState=0;
         }else{
           rxBuffer[rxBufPtr][rxPtr++]=rxLen;//at the start is length
@@ -168,12 +176,14 @@ void Receive(uint8_t rcv){
       }else {
         readState=0;//CRC not match
         if(errorCnt_CRCmismatch<255)errorCnt_CRCmismatch++;
+        Serial.println(F("RxErr3"));
       }
       break;
     case 6:
       if(rcv==222){//end token
         rxBufferMsgReady[rxBufPtr]=true;//mark this packet as complete
       }else{
+        Serial.println(F("RxErr4"));
         if(errorCnt_dataCorrupt<255)errorCnt_dataCorrupt++; 
       }
       readState=0;
@@ -245,7 +255,7 @@ void ExchangeCommunicationWithServer(){
 
         }else{ // normal data
           for(int i=0;i<modulesCount;i++){
-            PrintModuleInfo(&moduleList[i]);
+            
             uint8_t sbuf[] = {11+i,(moduleList[i].address-MODULE_ADDRESS_RANGE_START+1)&0xFF,((moduleList[i].voltage)&0xFF00)>>8, (moduleList[i].voltage)&0xFF,((moduleList[i].temperature)&0xFF00)>>8, (moduleList[i].temperature)&0xFF};
 
             int cnt = Send(sbuf,6);
@@ -256,9 +266,12 @@ void ExchangeCommunicationWithServer(){
       }
 
       delay(50);//take some time for server to react even on the data that you just sent
-  
+
+      if(ethClient.available())
+        Serial.print(F("\nReceiving data from server! :"));
       while(ethClient.available()){
         uint8_t rcv = ethClient.read();
+        Serial.print(rcv);
         Receive(rcv);
       }
   

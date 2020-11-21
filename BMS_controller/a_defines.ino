@@ -3,8 +3,8 @@
 #include <U8x8lib.h> //OLED display https://github.com/olikraus/u8g2 (U8G2 in library manager)
 
 #include <Ethernet.h>//for ethernet shield
-#include <Wire.h>
 #include <SPI.h>
+#include <I2C.h>
 #include <avr/wdt.h>
 
 
@@ -122,7 +122,7 @@ uint8_t modulesCount=0;
 bool xHeating;
 
 //StateMachine
-uint8_t stateMachineStatus;
+uint8_t stateMachineStatus,iBtnStartCnt;
 unsigned long tmrDelay;
 bool xConnectBattery,xDisconnectBattery,xResetRequested;
 

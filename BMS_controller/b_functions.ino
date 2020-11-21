@@ -14,10 +14,21 @@ bool CheckTimer(unsigned long &timer, const unsigned long period){
 
 // ------------------------------------ Module operations -----------------------------------------------
 
-void ReadModuleQuick(struct  cell_module *module) {
-  module->voltage = Cell_read_voltage(module->address);
-  module->temperature = Cell_read_board_temp(module->address);
-
+bool ReadModuleQuick(struct  cell_module *module) {
+  uint16_t voltage = 0, temperature = 0;
+  bool res = true;
+  
+  res = Cell_read_voltage(module->address, voltage);
+  res = res && Cell_read_board_temp(module->address, temperature);
+  if(!res){
+    Serial.print(F("\nFailed to read Mod.quick!"));
+    Serial.println(module->address);
+    module->validValues = false;
+    return false;
+  }
+  module->voltage = voltage;
+  module->temperature = temperature;
+  
   if (module->voltage >= 0 && module->voltage <= 5000 && module->temperature > 0 && module->temperature < 600) {
 
     if ( module->voltage > module->maxVoltage ) {
@@ -31,39 +42,49 @@ void ReadModuleQuick(struct  cell_module *module) {
   } else {
     module->validValues = false;
   }
+
+  return true;
 }
 
-void ReadModule(struct  cell_module *module) {
-  ReadModuleQuick(module);
-  module->voltageCalib = Cell_read_voltage_calibration(module->address);
-  module->temperatureCalib = Cell_read_temperature_calibration(module->address);
-
-  PrintModuleInfo(module);
+bool ReadModule(struct  cell_module *module) {
+  float voltCalib = 0, tempCalib = 0;
+  bool res = true;
+  
+  res = ReadModuleQuick(module);
+  res = res && Cell_read_voltage_calibration(module->address, voltCalib);
+  res = res && Cell_read_temperature_calibration(module->address, tempCalib);
+  if(!res){
+    Serial.print(F("\nFailed to read Module!"));
+    Serial.println(module->address);
+    return false;
+  }
+  module->voltageCalib = voltCalib;
+  module->temperatureCalib = tempCalib;
+  return true;
 }
 
-void ReadModules(bool quick) {
+bool ReadModules(bool quick) {
+  bool res = true;
   Serial.print(F("Reading all modules"));
   Serial.println(quick?F(" quickly"):F(" fully"));
   for(uint8_t i=0;i<modulesCount;i++){
     if(moduleList[i].address!=0){
-      Serial.print("read");
-      Serial.println(i);
-      if(quick)
-        ReadModuleQuick(&moduleList[i]);
-      else
-        ReadModule(&moduleList[i]);
+      if(quick){
+        res = res && ReadModuleQuick(&moduleList[i]);
+        PrintModuleInfo(&moduleList[i]);
+      }
+      else{
+        res = res && ReadModule(&moduleList[i]);
+        PrintModuleInfo(&moduleList[i]);
+      }
     }
   }
+  return res;
 }
-bool PingModule(uint8_t address) {  
-  Wire.beginTransmission(address);
-  byte error2 = Wire.endTransmission();
-  if (error2 == 0)
-  {
-      return true;
-  }
-
-  return false;
+bool PingModule(uint8_t address) { 
+  bool ok = !(I2c._start() || I2c._sendAddress(SLA_W(address)) || I2c._stop());
+  
+  return ok;
 }
 
 uint8_t Provision() {//finding cell modules with default addresses
