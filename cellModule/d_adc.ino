@@ -1,5 +1,20 @@
+// Interrupt service routine for the ADC completion
+// Sequence of reading is like:
+
+// voltageBuff[0] = ADC;
+// voltageBuff[1] = ADC;
+// ....
+// voltageBuff[OVERSAMPLE_LOOP-1] = ADC;
+
+// then anytime, when read counter reaches TEMP_READING_LOOP_FREQ, temperature is read, like:
+
+// changed MUX
+// skipping this ADC reading
+// temperature = ADC; + changing MUX + next reading will be skipped
+
+
 ISR(ADC_vect) {
-  // Interrupt service routine for the ADC completion
+  
   //uint8_t adcl = ADCL;
   //uint16_t value = ADCH << 8 | adcl;
 
@@ -31,17 +46,17 @@ ISR(ADC_vect) {
 
     //Populate the rolling buffer with values from the ADC
     last_raw_adc = value;
-    analogVal[analogValIndex] = value;
+    voltageBuff[voltageBufIdx] = value;
 
-    analogValIndex++;
+    voltageBufIdx++;
 
-    if (analogValIndex == OVERSAMPLE_LOOP) {
-      analogValIndex = 0;
-      buffer_ready = 1;// indicates first time ever valid data
+    if (voltageBufIdx == OVERSAMPLE_LOOP) {
+      voltageBufIdx = 0;
+      voltageBufferReady = 1;// indicates valid data, used in main logic
     }
 
-    tempReadingCnt++;
 
+    tempReadingCnt++;
     if (tempReadingCnt == TEMP_READING_LOOP_FREQ) {
       //use ADC0 for temp probe input on next ADC loop
 

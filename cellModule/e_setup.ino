@@ -31,7 +31,7 @@ void setup() {
     PORTB &= ~(1 << PB5);
   */
 
-  pinMode(PB4, OUTPUT); //PB4 = PIN 3
+  pinMode(PB4, OUTPUT); //bypass - burning resistor
   digitalWrite(PB4, LOW);
 
   ledON();
@@ -51,7 +51,7 @@ void setup() {
 
   cli();//stop interrupts
 
-  analogValIndex = 0;
+  voltageBufIdx = 0;
 
   initTimer1();
   initADC();
@@ -65,8 +65,6 @@ void setup() {
 
   // Enable Global Interrupts
   sei();
-
-  wait_for_buffer_ready();
 
   init_i2c();
   

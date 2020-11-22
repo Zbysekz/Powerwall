@@ -12,6 +12,28 @@ bool CheckTimer(unsigned long &timer, const unsigned long period){
    }
 }
 
+bool getSafetyConditions(bool printDetail){
+   bool voltagesOk = true;
+
+  for(int i=0;i<modulesCount;i++)
+    if(moduleList[i].voltage <= LIMIT_VOLT_LOW || moduleList[i].voltage >= LIMIT_VOLT_HIGH){
+      voltagesOk = false;
+      break;
+    }
+
+  bool res = voltagesOk && status_eth==1 && modulesCount==REQUIRED_CNT_MODULES;
+  
+  if(!res && printDetail){//print reasons, only if not met
+    Serial.print(F("\nSafety cond - voltages:"));
+    Serial.print(voltagesOk);
+    Serial.print(F(" eth:"));
+    Serial.print(status_eth);
+    Serial.print(F(" modCnt:"));
+    Serial.println(modulesCount);
+  }
+  return res;
+}
+
 // ------------------------------------ Module operations -----------------------------------------------
 
 bool ReadModuleQuick(struct  cell_module *module) {
@@ -23,13 +45,14 @@ bool ReadModuleQuick(struct  cell_module *module) {
   if(!res){
     Serial.print(F("\nFailed to read Mod.quick!"));
     Serial.println(module->address);
-    module->validValues = false;
+    if(++module->readErrCnt>=3)
+      module->validValues = false;//comm failure must happen 3x times to consider values as invalid
     return false;
   }
   module->voltage = voltage;
   module->temperature = temperature;
   
-  if (module->voltage >= 0 && module->voltage <= 5000 && module->temperature > 0 && module->temperature < 600) {
+  if (module->voltage >= 0 && module->voltage <= 500 && module->temperature > 0 && module->temperature < 600) {
 
     if ( module->voltage > module->maxVoltage ) {
       module->maxVoltage = module->voltage;
@@ -39,6 +62,7 @@ bool ReadModuleQuick(struct  cell_module *module) {
     }
 
     module->validValues = true;
+    module->readErrCnt = 0;
   } else {
     module->validValues = false;
   }
@@ -71,11 +95,11 @@ bool ReadModules(bool quick) {
     if(moduleList[i].address!=0){
       if(quick){
         res = res && ReadModuleQuick(&moduleList[i]);
-        PrintModuleInfo(&moduleList[i]);
+        PrintModuleInfo(&moduleList[i], false);
       }
       else{
         res = res && ReadModule(&moduleList[i]);
-        PrintModuleInfo(&moduleList[i]);
+        PrintModuleInfo(&moduleList[i], true);
       }
     }
   }
@@ -131,17 +155,21 @@ void ScanModules() {
   Serial.println("End scanning.");
 }
 
-void PrintModuleInfo(struct  cell_module *module){
+void PrintModuleInfo(struct  cell_module *module, bool withCal){
   Serial.print(F("Address: "));
   Serial.print(module->address);
   Serial.print(F(" V:"));
   Serial.print(module->voltage);
   Serial.print(F(" T:"));
   Serial.print(module->temperature);
-  Serial.print(F(" VC:"));
-  Serial.print(module->voltageCalib,3);
-  Serial.print(F(" TC:"));
-  Serial.print(module->temperatureCalib,3);
+  if(withCal){
+    Serial.print(F(" VC:"));
+    Serial.print(module->voltageCalib,3);
+    Serial.print(F(" TC:"));
+    Serial.print(module->temperatureCalib,3);
+  }
+  Serial.print(F(" Valid:"));
+  Serial.print(module->validValues);
   Serial.println(F(""));
 }
 

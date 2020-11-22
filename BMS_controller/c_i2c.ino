@@ -152,8 +152,16 @@ bool Cell_read_error_counter(uint8_t cell_id, uint16_t &value) {
   return Read_uint16_from_cell(cell_id, read_error_counter, value);
 }
 
+bool Cell_read_burning_counter(uint8_t cell_id, uint16_t &value) {
+  return Read_uint16_from_cell(cell_id, read_burning_counter, value);
+}
+
 bool Cell_read_board_temp(uint8_t cell_id, uint16_t &value) {
   return Read_uint16_from_cell(cell_id, read_temperature, value);
+}
+
+bool Cell_read_bypass_voltage_measurement(uint8_t cell_id, uint16_t &value) {
+  return Read_uint16_from_cell(cell_id, read_bypass_voltage_measurement, value);
 }
 
 bool Cell_read_bypass_voltage_measurement(uint8_t cell_id, uint16_t &value) {

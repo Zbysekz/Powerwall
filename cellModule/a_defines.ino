@@ -1,6 +1,6 @@
 
 
-//Show error is not targetting ATTINY85
+//Show error if not targetting ATTINY85
 #if !(defined(__AVR_ATtiny85__))
 #error Written for ATTINY85/V chip
 #endif
@@ -24,8 +24,8 @@
 #define EEPROM_CHECKSUM_ADDRESS 0
 #define EEPROM_CONFIG_ADDRESS 20
 
-#define MIN_BYPASS_VOLTAGE 3000U
-#define MAX_BYPASS_VOLTAGE 4200U
+#define MIN_BYPASS_VOLTAGE 300U //x10mV
+#define MAX_BYPASS_VOLTAGE 420U //x10mV
 
 //Number of TIMER1 cycles between voltage reading checks (240 = approx 30 seconds)
 #define BYPASS_COUNTER_MAX 240
@@ -64,18 +64,18 @@
 #define READOUT_error_counter 15
 #define READOUT_bypass_state 16
 #define READOUT_bypass_voltage_measurement 17
-#define READOUT_load_resistance 18
+#define READOUT_burningCounter 18
 
 
 volatile bool skipNextADC = false;
-volatile uint16_t analogVal[OVERSAMPLE_LOOP];
+volatile uint16_t voltageBuff[OVERSAMPLE_LOOP];
 
 volatile uint16_t tempSensorValue = 0;
-volatile uint8_t analogValIndex;
-volatile uint8_t buffer_ready = 0;
+volatile uint8_t voltageBufIdx;
+volatile bool voltageBufferReady = 0;
 volatile uint8_t tempReadingCnt = 0;
 volatile uint8_t cmdByte = 0;
-volatile uint8_t last_i2c_request = 255;
+volatile uint8_t i2cTmr = 255;
 
 volatile bool ledFlash = false;
 volatile bool badConfiguration = false;
@@ -86,7 +86,7 @@ volatile uint16_t voltageMeasurement = 0;
 volatile uint16_t voltageMeasurement_bypass = 0;
 volatile uint16_t last_raw_adc = 0;
 volatile uint16_t targetBypassVoltage = 0;
-volatile uint8_t bypassCnt = 0;
+volatile uint8_t bypassCnt = 0,iBurningCounter=0;
 volatile boolean bypassEnabled = false;
 
 boolean inPanicMode = false;

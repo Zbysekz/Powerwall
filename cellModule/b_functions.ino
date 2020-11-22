@@ -75,14 +75,6 @@ void Reboot() {
   while (1) {}
 }
 
-void wait_for_buffer_ready() {
-  //Just delay here so the buffers are all ready before we service i2c
-  while (!buffer_ready) {
-    delay(100);
-    wdt_reset();
-  }
-}
-
 
 void sendUnsignedInt(uint16_t number) {
   Wire.write((byte)((number >> 8) & 0xFF));
@@ -120,7 +112,6 @@ void bypass_off() {
   targetBypassVoltage = 0;
   bypassCnt = 0;
   bypassEnabled = false;
-  green_pattern = GREEN_LED_PATTERN_STANDARD;
 }
 
 
@@ -128,7 +119,7 @@ float getVoltageMeasurement() {
   //Oversampling and take average of ADC samples use an unsigned integer
   uint32_t sum = 0;
   for (int k = 0; k < OVERSAMPLE_LOOP; k++) {
-    sum += analogVal[k];
+    sum += voltageBuff[k];
   }
   //Shift the bits to match OVERSAMPLE_LOOP size (buffer size of 8=3 shifts, 16=4 shifts)
   //Assume perfect reference of 2560mV for reference - we will correct for this with voltageCalibration

@@ -2,14 +2,14 @@
 void loop() {
   wdt_reset();
   
-  if (last_i2c_request > 0) {
+  if (i2cTmr > 0) {
     //Count down loop for requests to see if i2c bus hangs or controller stops talking
-    last_i2c_request--;
+    i2cTmr--;
   }
 
   //If we are on the default SLAVE address signalize it
   if (!badConfiguration && currentConfig.SLAVE_ADDR != DEFAULT_SLAVE_ADDR) {
-    HandlePanicMode();//reset i2c bus if no communication goin on for some time
+    HandlePanicMode();//reset i2c bus if no communication going on for some time
   }
 
   if(inPanicMode)
@@ -20,8 +20,8 @@ void loop() {
 }
 
 void HandlePanicMode(){
-  if (last_i2c_request == 0 && inPanicMode == false) {//go to panic mode, when timeout of I2C requests
-      
+  if (i2cTmr == 0 && inPanicMode == false) {//go to panic mode, when timeout of I2C requests
+
     green_pattern = GREEN_LED_PANIC;
     inPanicMode = true;
     //Try resetting the i2c bus
@@ -31,7 +31,7 @@ void HandlePanicMode(){
     error_counter++;
   }
 
-  if (last_i2c_request > 0 && inPanicMode == true) {//return from panic mode
+  if (i2cTmr > 0 && inPanicMode == true) {//return from panic mode
     green_pattern = GREEN_LED_PATTERN_STANDARD;
     inPanicMode = false;
   }
@@ -57,17 +57,17 @@ ISR(TIMER1_COMPA_vect) // timer interrupt
   }
   ///////////////////////////////////////////////////
   
-  if (bypassEnabled) {
-    //This must go above the following "if (bypassCnt > 0)" statement...
-    if (bypassCnt == 0 && analogValIndex == 0) {
-      //We are in bypass and just finished an in-cycle voltage measurement
+  if (bypassEnabled) {// burning energy in resistor
+    if(iBurningCounter<65535)iBurningCounter++;//counting burned Wh, reset by reading
+    
+    if (bypassCnt == 0 && voltageBufferReady) {
+      //We are in bypass and just filled in whole buffer with voltage measurements
       voltageMeasurement_bypass = getVoltageMeasurement();
 
-      if (targetBypassVoltage >= voltageMeasurement_bypass) {
-        //We reached the goal
+      if (targetBypassVoltage >= voltageMeasurement_bypass) {//We have reached the goal
         bypass_off();
-      } else {
-        //Try again
+        green_pattern = GREEN_LED_PATTERN_STANDARD;
+      } else { //Keep burning
         bypassCnt = BYPASS_COUNTER_MAX;
       }
     }
@@ -85,13 +85,13 @@ ISR(TIMER1_COMPA_vect) // timer interrupt
         digitalWrite(PB4, LOW);
 
         //Reset voltage ADC buffer
-        analogValIndex = 0;
+        voltageBufIdx = 0;//we want whole one cycle
+        voltageBufferReady = false;
       }
     }
 
   } else {
-    //Safety check we ensure bypass is always off if not enabled
-    digitalWrite(PB4, LOW);
+    digitalWrite(PB4, LOW);//Safety check we ensure bypass is always off if not enabled
   }
 
   //trigger ADC reading

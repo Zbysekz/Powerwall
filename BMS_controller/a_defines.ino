@@ -1,12 +1,11 @@
 
-
-#include <U8x8lib.h> //OLED display https://github.com/olikraus/u8g2 (U8G2 in library manager)
-
 #include <Ethernet.h>//for ethernet shield
 #include <SPI.h>
-#include <I2C.h>
+#include <I2C.h>//library from https://github.com/rambo/I2C
 #include <avr/wdt.h>
 
+
+//---------------------- SYSTEM PARAMETERS ---------------------------------------------------------
 
 // the IP address for the shield:
 IPAddress ip(192, 168, 0, 12);
@@ -14,42 +13,32 @@ IPAddress ipServer(192, 168, 0, 3);
 
 const byte mac[] = {0xDD, 0xAA, 0xBE, 0xEF, 0xFE, 0xED};
 
-EthernetClient ethClient;
-
-U8X8_SSD1306_128X64_NONAME_HW_I2C display; //U8X8_SSD1306_128X64_NONAME_HW_I2C
-
-
-bool xFullReadDone;
-//timers
-unsigned long tmrStartTime,tmrServerComm,tmrScanModules,tmrDisplay,tmrPageChange,tmrRetryScan;
-//commands
-bool xCalibDataRequested;
-//statuses
-uint8_t status_i2c, status_eth;
-uint8_t errorCnt_dataCorrupt, errorCnt_CRCmismatch, errorCnt_BufferFull;
-
-uint8_t showPage;//what page is shown on the display
-
-#define RXBUFFSIZE 20
-#define RXQUEUESIZE 3
-
-uint8_t rxBuffer[RXQUEUESIZE][RXBUFFSIZE];//for first item if >0 command is inside, 0 after it is proccessed
-bool rxBufferMsgReady[RXQUEUESIZE];
-uint8_t rxLen,crcH,crcL,readState,rxPtr,rxBufPtr=0;
-uint16_t crcReal;
-bool displayOk;
-
-//---------------------- SYSTEM PARAMETERS ---------------------------------------------------------
 #define REQUIRED_CNT_MODULES 6
 
 #define REQUIRED_RACK_TEMPERATURE 270 //0,1°C
 
-//discharging voltage range
-#define DISCHARGE_VOLT_LOW 330 //x10mV
-#define DISCHARGE_VOLT_HIGH 420 //x10mV
-//charge voltage range
-#define CHARGE_VOLT_LOW 290 //xmV
-#define CHARGE_VOLT_HIGH 410 //xmV
+//absolute voltage limits
+#define LIMIT_VOLT_LOW 330 //x10mV
+#define LIMIT_VOLT_HIGH 420 //x10mV
+
+//balancing thresholds
+#define IMBALANCE_THRESHOLD 10//x10mV
+#define IMBALANCE_THRESHOLD_CHARGED 3//x10mV - same as above, but when is battery considered as fully charged
+
+#define RXBUFFSIZE 20
+#define RXQUEUESIZE 3
+
+//---------------------- ADDRESSING PARAMETERS ---------------------------------------------------------
+//Default i2c SLAVE address (used for auto provision of address)
+#define DEFAULT_SLAVE_ADDR 21
+
+//Configured cell modules use i2c addresses 24 to 36 (12S)
+//See http://www.i2c-bus.org/addressing/
+#define MODULE_ADDRESS_RANGE_START 24
+#define MODULE_ADDRESS_RANGE_SIZE 12
+
+#define MODULE_ADDRESS_RANGE_END (MODULE_ADDRESS_RANGE_START + MODULE_ADDRESS_RANGE_SIZE)
+
 
 //---------------------- PIN DEFINITIONS -----------------------------------------------------------
 
@@ -58,8 +47,7 @@ bool displayOk;
 
 #define PIN_UPS_BTN 7
 
-//--------------------------------------------------------------------------------------------------
-
+//---------------------- COMMAND DEFINES -----------------------------------------------------------
 
 //If we send a cmdByte with BIT 6 set its a command byte which instructs the cell to do something (not for reading)
 #define COMMAND_BIT 6
@@ -83,8 +71,10 @@ bool displayOk;
 #define read_error_counter 15
 #define read_bypass_enabled_state 16
 #define read_bypass_voltage_measurement 17
+#define read_burning_counter 18
 
-//Default values
+//---------------------- STRUCTURES -----------------------------------------------------------
+
 struct cell_module {
   // 7 bit slave I2C address
   uint8_t address; //module address
@@ -100,20 +90,33 @@ struct cell_module {
   uint16_t minVoltage;
   uint16_t maxVoltage;
 
-  bool validValues;
+  uint8_t readErrCnt;//how much times we had reading error
+  bool validValues;//if we have few read errors or the values are not in good range, they are not valid
 
-  bool updateCalibration;
+  uint16_t iStatErrCnt, iBurningCnt;//statistics
 };
 
-//Default i2c SLAVE address (used for auto provision of address)
-#define DEFAULT_SLAVE_ADDR 21
+//---------------------- VARIABLES -----------------------------------------------------------
 
-//Configured cell modules use i2c addresses 24 to 36 (12S)
-//See http://www.i2c-bus.org/addressing/
-#define MODULE_ADDRESS_RANGE_START 24
-#define MODULE_ADDRESS_RANGE_SIZE 12
+EthernetClient ethClient;
 
-#define MODULE_ADDRESS_RANGE_END (MODULE_ADDRESS_RANGE_START + MODULE_ADDRESS_RANGE_SIZE)
+bool xFullReadDone;
+//timers
+unsigned long tmrStartTime,tmrServerComm,tmrScanModules,tmrRetryScan,tmrSendData,tmrReadStatistics;
+//commands
+bool xCalibDataRequested;
+//statuses
+uint8_t status_i2c, status_eth;
+uint8_t errorCnt_dataCorrupt, errorCnt_CRCmismatch, errorCnt_BufferFull;
+
+
+
+
+uint8_t rxBuffer[RXQUEUESIZE][RXBUFFSIZE];//for first item if >0 command is inside, 0 after it is proccessed
+bool rxBufferMsgReady[RXQUEUESIZE];
+uint8_t rxLen,crcH,crcL,readState,rxPtr,rxBufPtr=0;
+uint16_t crcReal;
+
 
 cell_module moduleList[MODULE_ADDRESS_RANGE_SIZE];
 uint8_t modulesCount=0;
@@ -124,7 +127,15 @@ bool xHeating;
 //StateMachine
 uint8_t stateMachineStatus,iBtnStartCnt;
 unsigned long tmrDelay;
-bool xConnectBattery,xDisconnectBattery,xResetRequested;
+//commands
+bool xReqRun,xReqChargeOnly,xReqDisconnect,xReqErrorReset;
+bool xEmergencyShutDown;
+bool xReadyToSendStatistics;
+//aux vars
+uint8_t iFailCommCnt;
+
+
+
 
 union {
   float val;

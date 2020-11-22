@@ -95,19 +95,29 @@ void ProcessReceivedData(uint8_t data[]){
       }
      break;
     case 10:
-      xConnectBattery = true;
-      Serial.println(F("Connect BATTERY CMD"));
+      xReqRun = true;
+      Serial.println(F("RUN CMD"));
      break;
     case 11:
-      xDisconnectBattery = true;
-      Serial.println(F("Disconnect BATTERY CMD"));
-      break;
+      xReqChargeOnly = true;
+      Serial.println(F("CHARGE ONLY CMD"));
+     break;
     case 12:
-      xResetRequested = true;
-      Serial.println(F("Reset BATTERY CMD"));
+      xReqDisconnect = true;
+      Serial.println(F("DISCONNECT CMD"));
+      break;
+    case 13:
+      xReqErrorReset = true;
+      Serial.println(F("RESET ERR CMD"));
+      break;
+    case 14:
+      if(len==4){
+        Cell_set_bypass_voltage(data[2],data[3]*256+data[4]);
+        Serial.println(F("MANUALLY BURNING!"));
+      }
       break;
     default:
-      Serial.println(F("Not defined command"));
+      Serial.println(F("Not defined command!"));
       
   }
 }
@@ -229,7 +239,7 @@ void ExchangeCommunicationWithServer(){
       if(xCalibDataRequested){// calibration data
           Serial.println(F("Sending calibration"));
           for(int i=0;i<modulesCount;i++){
-            PrintModuleInfo(&moduleList[i]);
+            PrintModuleInfo(&moduleList[i], true);
 
             float_to_bytes.val = moduleList[i].voltageCalib;
 
@@ -252,23 +262,44 @@ void ExchangeCommunicationWithServer(){
               Serial.println(F("Sending calibration failed!"));
             }
           }
-
-        }else{ // normal data
+        else if(xReadyToSendStatistics){
+          xFail = false;
           for(int i=0;i<modulesCount;i++){
-            
-            uint8_t sbuf[] = {11+i,(moduleList[i].address-MODULE_ADDRESS_RANGE_START+1)&0xFF,((moduleList[i].voltage)&0xFF00)>>8, (moduleList[i].voltage)&0xFF,((moduleList[i].temperature)&0xFF00)>>8, (moduleList[i].temperature)&0xFF};
-
-            int cnt = Send(sbuf,6);
-            if(cnt<=0){
-              Serial.println(F("Sending data failed!"));
-            } 
+              
+              uint8_t sbuf[] = {71+i,(moduleList[i].address-MODULE_ADDRESS_RANGE_START+1)&0xFF,((moduleList[i].iStatErrCnt)&0xFF00)>>8, (moduleList[i].iStatErrCnt)&0xFF,((moduleList[i].iBurningCnt)&0xFF00)>>8, (moduleList[i].iBurningCnt)&0xFF};
+  
+              int cnt = Send(sbuf,6);
+              if(cnt<=0){
+                Serial.println(F("Sending statistics failed!"));
+                xFail = true;
+                break;//do not continue if one of them failed
+              } 
+          }
+          if(!xFail)
+            xReadyToSendStatistics=false;
+          
+        }else{ // normal data
+          if(CheckTimer(tmrSendData, 60000L)){
+            for(int i=0;i<modulesCount;i++){
+              
+              uint8_t sbuf[] = {11+i,(moduleList[i].address-MODULE_ADDRESS_RANGE_START+1)&0xFF,((moduleList[i].voltage)&0xFF00)>>8, (moduleList[i].voltage)&0xFF,((moduleList[i].temperature)&0xFF00)>>8, (moduleList[i].temperature)&0xFF};
+  
+              int cnt = Send(sbuf,6);
+              if(cnt<=0){
+                Serial.println(F("Sending data failed!"));
+              } 
+            }
           }
       }
-
-      delay(50);//take some time for server to react even on the data that you just sent
-
+      int timeout = 0;
+      while(!ethClient.available() && timeout++<10){
+        delay(100);//take some time for server to react even on the data that you just sent
+        wdt_reset();
+      }
       if(ethClient.available())
         Serial.print(F("\nReceiving data from server! :"));
+      else
+        Serial.println(F("Nothing from server."));
       while(ethClient.available()){
         uint8_t rcv = ethClient.read();
         Serial.print(rcv);

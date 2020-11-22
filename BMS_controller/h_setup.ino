@@ -1,6 +1,5 @@
 
 void setup() {
-
   wdt_enable(WDTO_8S);
    
   Serial.begin(19200);
@@ -24,18 +23,8 @@ void setup() {
   digitalWrite(PIN_UPS_BTN, false);
 
 
-  ////////////////////////////////////////LCD/////////////////////////////////////////////////
-    Serial.print(F("\nLCD init "));
-  /*if(display.begin()){// for ESP display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr 0x3D (for the 128x64)
-    
-    // Clear the buffer.
-    display.clearDisplay();
-    display.setFont(u8x8_font_chroma48medium8_r);
-    displayOk=true;
-  }*/
   ////////////////////////////////////////////////////////////////////////////////////////////
   
-  ////////////
   Ethernet.begin(mac, ip);
 
   Serial.print(F("\nEthernet started "));
@@ -44,10 +33,8 @@ void setup() {
   if (Ethernet.hardwareStatus() == EthernetNoHardware) {
     Serial.println(F("Ethernet shield was not found!"));
 
-    display.clearDisplay();
-    display.print(F("HW eth not found!"));
     status_eth=10;
-    while (true);// do nothing, no point running without Ethernet hardware
+    while (true);// do nothing, no point running without Ethernet hardware, WDT will reset Arduino
   }
   if (Ethernet.linkStatus() == LinkOFF) {
     Serial.println(F("Ethernet cable is not connected."));
@@ -55,20 +42,14 @@ void setup() {
   }
 
   
-  //Wire.setTimeout(1000);  //1000ms timeout
-  //Wire.setClock(100000);  //100khz
-  I2c.begin();//5,0); // I2C -- SDA GPIO5, SCL GPIOO /if we are using LCD it is already initialized  
+  I2c.begin();// SDA=PC4, SCL=PC5
   I2c.setSpeed(false);//100kHz
-  I2c.pullup(false);// no pullups
-  I2c.timeOut(1000);//1000ms timeout
-  Serial.println(F("\nSetup finished."));
-
+  I2c.pullup(false);// no pullups, we have external
+  I2c.timeOut(500);//500ms timeout
+  
+  
   tmrStartTime = millis();
-  /* DONT USE OTA
-  pinMode(5,INPUT_PULLUP);
-  if(!digitalRead(5)){
-    Serial.println(F("OTA MODE"));
-    OTAmode=1;
-  }*/
   stateMachineStatus=0;
+
+  Serial.println(F("\nSetup finished."));
 }

@@ -37,6 +37,10 @@ void requestEvent() {
     case READOUT_temperature_calibration:
       sendFloat(currentConfig.tempSensorCalibration);
       break;
+    case READOUT_burningCounter:
+      sendUnsignedInt(iBurningCounter);
+      iBurningCounter = 0;//resest after it is read
+      break;
 
     default:
       //Dont do anything - timeout
@@ -46,8 +50,8 @@ void requestEvent() {
   //Clear cmdByte
   cmdByte = 0;
 
-  //Reset when we last processed a request, if this times out master has stopped communicating with module
-  last_i2c_request = 150;
+  //if this times out, master has stopped communicating with module
+  i2cTmr = 80;//150
 }
 
 
@@ -119,6 +123,7 @@ void receiveEvent(int bytesCnt) {
           } else {
             //Disable
             bypass_off();
+            green_pattern = GREEN_LED_PATTERN_STANDARD;
           }
         }
         break;
