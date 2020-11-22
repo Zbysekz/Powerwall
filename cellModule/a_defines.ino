@@ -9,7 +9,8 @@
 #error Processor speed should be 8Mhz internal
 #endif
 
-#include <USIWire.h>
+#include <TinyWireS.h>
+
 #include <EEPROM.h>
 #include <avr/sleep.h>
 #include <avr/wdt.h>

@@ -1,11 +1,6 @@
 
 void loop() {
   wdt_reset();
-  
-  if (i2cTmr > 0) {
-    //Count down loop for requests to see if i2c bus hangs or controller stops talking
-    i2cTmr--;
-  }
 
   //If we are on the default SLAVE address signalize it
   if (!badConfiguration && currentConfig.SLAVE_ADDR != DEFAULT_SLAVE_ADDR) {
@@ -15,8 +10,13 @@ void loop() {
   if(inPanicMode)
     bypass_off();
 
-  //Don't make this very large or watchdog will reset
-  delay(250);
+
+  /**
+     * This is the only way we can detect stop condition (http://www.avrfreaks.net/index.php?name=PNphpBB2&file=viewtopic&p=984716&sid=82e9dc7299a8243b86cf7969dd41b5b5#984716)
+     * it needs to be called in a very tight loop in order not to miss any (REMINDER: Do *not* use delay() anywhere, use tws_delay() instead).
+     * It will call the function registered via TinyWireS.onReceive(); if there is data in the buffer on stop.
+     */
+  TinyWireS_stop_check();
 }
 
 void HandlePanicMode(){
@@ -25,7 +25,7 @@ void HandlePanicMode(){
     green_pattern = GREEN_LED_PANIC;
     inPanicMode = true;
     //Try resetting the i2c bus
-    Wire.end();
+    disable_i2c();
     init_i2c();
 
     error_counter++;
@@ -40,6 +40,12 @@ void HandlePanicMode(){
 
 ISR(TIMER1_COMPA_vect) // timer interrupt
 {
+
+  if (i2cTmr > 0) {
+    //Count down loop for requests to see if i2c bus hangs or controller stops talking
+    i2cTmr--;
+  }
+  
   /////////////////Flash LED in sync with bit pattern
   if (green_pattern == 0) {//if not showing any pattern
     if (ledFlash)  {

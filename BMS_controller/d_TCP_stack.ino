@@ -262,8 +262,8 @@ void ExchangeCommunicationWithServer(){
               Serial.println(F("Sending calibration failed!"));
             }
           }
-        else if(xReadyToSendStatistics){
-          xFail = false;
+      }else if(xReadyToSendStatistics){
+          bool xFail = false;
           for(int i=0;i<modulesCount;i++){
               
               uint8_t sbuf[] = {71+i,(moduleList[i].address-MODULE_ADDRESS_RANGE_START+1)&0xFF,((moduleList[i].iStatErrCnt)&0xFF00)>>8, (moduleList[i].iStatErrCnt)&0xFF,((moduleList[i].iBurningCnt)&0xFF00)>>8, (moduleList[i].iBurningCnt)&0xFF};

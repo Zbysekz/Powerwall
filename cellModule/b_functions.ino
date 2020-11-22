@@ -77,34 +77,34 @@ void Reboot() {
 
 
 void sendUnsignedInt(uint16_t number) {
-  Wire.write((byte)((number >> 8) & 0xFF));
-  Wire.write((byte)(number & 0xFF));
+  TinyWireS.send((byte)((number >> 8) & 0xFF));
+  TinyWireS.send((byte)(number & 0xFF));
 }
 
 void sendByte(uint8_t number) {
-  Wire.write(number);
+  TinyWireS.send(number);
 }
 
 void sendFloat(float number) {
   float_to_bytes.val = number;
 
-  Wire.write(float_to_bytes.b[0]);
-  Wire.write(float_to_bytes.b[1]);
-  Wire.write(float_to_bytes.b[2]);
-  Wire.write(float_to_bytes.b[3]);
+  TinyWireS.send(float_to_bytes.b[0]);
+  TinyWireS.send(float_to_bytes.b[1]);
+  TinyWireS.send(float_to_bytes.b[2]);
+  TinyWireS.send(float_to_bytes.b[3]);
 }
 
 float readFloat() {
-  float_to_bytes.b[0] = Wire.read();
-  float_to_bytes.b[1] = Wire.read();
-  float_to_bytes.b[2] = Wire.read();
-  float_to_bytes.b[3] = Wire.read();
+  float_to_bytes.b[0] = TinyWireS.receive();
+  float_to_bytes.b[1] = TinyWireS.receive();
+  float_to_bytes.b[2] = TinyWireS.receive();
+  float_to_bytes.b[3] = TinyWireS.receive();
 
   return float_to_bytes.val;
 }
 uint16_t readUINT16() {
-  uint16_t_to_bytes.b[0] = Wire.read();
-  uint16_t_to_bytes.b[1] = Wire.read();
+  uint16_t_to_bytes.b[0] = TinyWireS.receive();
+  uint16_t_to_bytes.b[1] = TinyWireS.receive();
   return uint16_t_to_bytes.val;
 }
 

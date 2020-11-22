@@ -39,7 +39,7 @@ void loop() {
       BalanceCells();
   }
 
-  if(CheckTimer(tmrReadStatistics, 300000L)){//read statistics
+  if(CheckTimer(tmrReadStatistics, 300000L)){//read statistics - each 5mins
     bool res = true;
     uint16_t iErrCnt,iBurnCnt;
     

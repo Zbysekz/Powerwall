@@ -56,15 +56,20 @@ void requestEvent() {
 
 
 //cellController -> cellModule
-// function that executes whenever data is received from master
-void receiveEvent(int bytesCnt) {
+/**
+ * The I2C data received handler
+ *
+ * This needs to complete before the next incoming transaction (start, data, restart/stop) on the bus does
+ * so be quick, set flags for long running tasks to be called from the mainloop instead of running them directly
+ */
+void receiveEvent(uint8_t bytesCnt) {
   if (bytesCnt <= 0) return;
 
   //If cmdByte is not zero then something went wrong in the i2c comms,
   //master failed to request any data after command
   if (cmdByte != 0) error_counter++;
 
-  cmdByte = Wire.read();
+  cmdByte = TinyWireS.receive();
   bytesCnt--;
 
   //Is it a command
@@ -75,7 +80,7 @@ void receiveEvent(int bytesCnt) {
     switch (cmdByte) {
       case COMMAND_green_led_pattern:
         if (bytesCnt == 1) {
-          green_pattern = Wire.read();
+          green_pattern = TinyWireS.receive();
         }
         break;
 
@@ -132,7 +137,7 @@ void receiveEvent(int bytesCnt) {
       case COMMAND_set_slave_address:
         //Set i2c slave address and write to EEPROM, then reboot
         if (bytesCnt == 1 ) {
-          uint8_t newAddress = Wire.read();
+          uint8_t newAddress = TinyWireS.receive();
           //Only accept if its a different address
           if (newAddress != currentConfig.SLAVE_ADDR && newAddress >= SLAVE_ADDR_START_RANGE && newAddress <= SLAVE_ADDR_END_RANGE) {
             currentConfig.SLAVE_ADDR = newAddress;
@@ -156,6 +161,4 @@ void receiveEvent(int bytesCnt) {
     }
   }
 
-  // clear rx buffer
-  while (Wire.available()) Wire.read();
 }

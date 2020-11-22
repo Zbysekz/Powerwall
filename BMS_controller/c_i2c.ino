@@ -59,7 +59,8 @@ bool Send_command(uint8_t cell_id, uint8_t cmd, uint16_t u16Value) {
   res = res && I2c._sendByte(uint16_t_to_bytes.buffer[0])==0;
   res = res && I2c._sendByte(uint16_t_to_bytes.buffer[1])==0;
   res = res && I2c._stop()==0;
- 
+
+  return res;
 }
 
 uint8_t cmdByte(uint8_t cmd) {
@@ -158,10 +159,6 @@ bool Cell_read_burning_counter(uint8_t cell_id, uint16_t &value) {
 
 bool Cell_read_board_temp(uint8_t cell_id, uint16_t &value) {
   return Read_uint16_from_cell(cell_id, read_temperature, value);
-}
-
-bool Cell_read_bypass_voltage_measurement(uint8_t cell_id, uint16_t &value) {
-  return Read_uint16_from_cell(cell_id, read_bypass_voltage_measurement, value);
 }
 
 bool Cell_read_bypass_voltage_measurement(uint8_t cell_id, uint16_t &value) {
