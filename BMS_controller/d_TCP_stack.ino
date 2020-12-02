@@ -22,6 +22,7 @@ void ProcessReceivedData(uint8_t data[]){
   int res=0;//aux temp
   int len = data[0];
   uint16_t auxVal = 0;
+  float val1,val2;
   
   switch(data[1]){//by ID
     case 0://patern
@@ -53,13 +54,30 @@ void ProcessReceivedData(uint8_t data[]){
       Serial.println(data[2]);
       Serial.println(float_to_bytes.val,3);
       
-      res= Cell_set_voltage_calibration(data[2],float_to_bytes.val);
-      if(res==0){
+      res = Cell_set_voltage_calibration(data[2],float_to_bytes.val);
+      if(res){
         Serial.println(F("Success"));
         ReadModules(false);//read all fully
       }else{
-        Serial.print(F("Fail, error:"));
-        Serial.print(res);
+        Serial.print(F("Failed!"));
+       }
+    break;
+    case 15: // set voltage calibration to specific cell
+      float_to_bytes.buffer[0]=data[3];
+      float_to_bytes.buffer[1]=data[4];
+      float_to_bytes.buffer[2]=data[5];
+      float_to_bytes.buffer[3]=data[6];
+      
+      Serial.print(F("Calibrating voltage for module:"));
+      Serial.println(data[2]);
+      Serial.println(float_to_bytes.val,3);
+      
+      res = Cell_set_voltage_calibration2(data[2],float_to_bytes.val);
+      if(res){
+        Serial.println(F("Success"));
+        ReadModules(false);//read all fully
+      }else{
+        Serial.print(F("Failed!"));
        }
     break;
     case 5: // set temperature calibration to specific cell
@@ -73,14 +91,30 @@ void ProcessReceivedData(uint8_t data[]){
       Serial.println(float_to_bytes.val,3);
       
       res = Cell_set_temperature_calibration(data[2],float_to_bytes.val);
-      if(res==0){
+      if(res){
         Serial.println(F("Success"));
         ReadModules(false);//read all fully
       }else{
-        Serial.print(F("Fail, error:"));
-        Serial.print(res);
+        Serial.print(F("Failed!"));
        }
+    break;
+    case 16: // set temperature calibration to specific cell
+      float_to_bytes.buffer[0]=data[3];
+      float_to_bytes.buffer[1]=data[4];
+      float_to_bytes.buffer[2]=data[5];
+      float_to_bytes.buffer[3]=data[6];
       
+      Serial.print(F("Calibrating temperature for module:"));
+      Serial.println(data[2]);
+      Serial.println(float_to_bytes.val,3);
+      
+      res = Cell_set_temperature_calibration2(data[2],float_to_bytes.val);
+      if(res){
+        Serial.println(F("Success"));
+        ReadModules(false);//read all fully
+      }else{
+        Serial.print(F("Failed!"));
+       }
     break;
     case 6:
       if(Cell_read_raw_voltage(data[2], auxVal)){
@@ -279,15 +313,17 @@ void ExchangeCommunicationWithServer(){
             xReadyToSendStatistics=false;
           
         }else{ // normal data
+          SendStatus(); 
           if(CheckTimer(tmrSendData, 60000L)){
             for(int i=0;i<modulesCount;i++){
-              
-              uint8_t sbuf[] = {11+i,(moduleList[i].address-MODULE_ADDRESS_RANGE_START+1)&0xFF,((moduleList[i].voltage)&0xFF00)>>8, (moduleList[i].voltage)&0xFF,((moduleList[i].temperature)&0xFF00)>>8, (moduleList[i].temperature)&0xFF};
-  
-              int cnt = Send(sbuf,6);
-              if(cnt<=0){
-                Serial.println(F("Sending data failed!"));
-              } 
+              if(moduleList[i].validValues){
+                uint8_t sbuf[] = {11+i,(moduleList[i].address-MODULE_ADDRESS_RANGE_START+1)&0xFF,((moduleList[i].voltage)&0xFF00)>>8, (moduleList[i].voltage)&0xFF,((moduleList[i].temperature)&0xFF00)>>8, (moduleList[i].temperature)&0xFF};
+    
+                int cnt = Send(sbuf,6);
+                if(cnt<=0){
+                  Serial.println(F("Sending data failed!"));
+                } 
+              }
             }
           }
       }
@@ -308,4 +344,13 @@ void ExchangeCommunicationWithServer(){
   
       ethClient.stop();
     }
+}
+
+void SendStatus(){
+  uint8_t sbuf[] = {10,stateMachineStatus,errorStatus,errorStatus_cause};
+    
+  int cnt = Send(sbuf,4);
+  if(cnt<=0){
+    Serial.println(F("Sending status failed!"));
+  } 
 }

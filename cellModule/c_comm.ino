@@ -27,15 +27,20 @@ void requestEvent() {
       break;
 
     case READOUT_temperature:
-      sendUnsignedInt((uint16_t)((float)tempSensorValue * currentConfig.tempSensorCalibration));
+      sendUnsignedInt((uint16_t)((float)tempSensorValue * currentConfig.tempSensorCalibration + currentConfig.tempSensorCalibration2));
       break;
 
     case READOUT_voltage_calibration:
       sendFloat(currentConfig.voltageCalibration);
       break;
-
+    case READOUT_voltage_calibration2:
+      sendFloat(currentConfig.voltageCalibration2);
+      break;
     case READOUT_temperature_calibration:
       sendFloat(currentConfig.tempSensorCalibration);
+      break;
+    case READOUT_temperature_calibration2:
+      sendFloat(currentConfig.tempSensorCalibration2);
       break;
     case READOUT_burningCounter:
       sendUnsignedInt(iBurningCounter);
@@ -103,6 +108,16 @@ void receiveEvent(uint8_t bytesCnt) {
           }
         }
         break;
+      case COMMAND_set_voltage_calibration2:
+        if (bytesCnt == sizeof(float)) {
+          float newValue = readFloat();
+          //Only accept if its different
+          if (newValue != currentConfig.voltageCalibration2) {
+            currentConfig.voltageCalibration2 = newValue;
+            WriteConfigToEEPROM();
+          }
+        }
+        break;
 
       case COMMAND_set_temperature_calibration:
         if (bytesCnt == sizeof(float)) {
@@ -114,7 +129,16 @@ void receiveEvent(uint8_t bytesCnt) {
           }
         }
         break;
-
+      case COMMAND_set_temperature_calibration2:
+        if (bytesCnt == sizeof(float)) {
+          float newValue = readFloat();
+          //Only accept if its different
+          if (newValue != currentConfig.tempSensorCalibration2) {
+            currentConfig.tempSensorCalibration2 = newValue;
+            WriteConfigToEEPROM();
+          }
+        }
+        break;
       case COMMAND_set_bypass_voltage:
         if (bytesCnt == sizeof(uint16_t)) {
           uint16_t newValue = readUINT16();
@@ -146,7 +170,10 @@ void receiveEvent(uint8_t bytesCnt) {
           }
         }
         break;
-
+      case COMMAND_resetI2c://controller requests this module to reset i2c
+        disable_i2c();
+        init_i2c();
+       break;
     }
 
     cmdByte = 0;

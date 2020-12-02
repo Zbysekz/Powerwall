@@ -25,7 +25,7 @@ void setup() {
 
   ////////////////////////////////////////////////////////////////////////////////////////////
   
-  Ethernet.begin(mac, ip);
+  Ethernet.begin(mac, ip, dns, gateway, subnet);
 
   Serial.print(F("\nEthernet started "));
   

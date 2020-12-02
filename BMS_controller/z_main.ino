@@ -35,8 +35,8 @@ void loop() {
       }
     }
 
-    if(getSafetyConditions(true))
-      BalanceCells();
+    //if(getSafetyConditions(true))
+      //BalanceCells();
   }
 
   if(CheckTimer(tmrReadStatistics, 300000L)){//read statistics - each 5mins
@@ -117,6 +117,7 @@ void PowerStateMachine(){
  
   bool xSafetyConditions = getSafetyConditions(false);
 
+
   switch (stateMachineStatus){
     case 0://IDLE - diconnected state
       digitalWrite(PIN_MAIN_RELAY, false);
@@ -172,6 +173,7 @@ void PowerStateMachine(){
 
         if(!xSafetyConditions){
           Serial.println(F("EMERGENCY shutdown"));
+          errorStatus_cause = errorStatus;//to retain information
           xEmergencyShutDown = true;
         }else
           Serial.println(F("Disconnect shutdown"));
@@ -248,14 +250,13 @@ void BalanceCells(){
         uint8_t xBurning = 0;
         bool res = Cell_read_bypass_enabled_state(moduleList[i].address, xBurning);
 
-        if(res && !xBurning)
+        if(res && !xBurning){
           res = Cell_set_bypass_voltage(moduleList[i].address, min + IMBALANCE_THRESHOLD);// burn to just match imbalance threshold
-          
+          Serial.print(F("\nBURNING start! module:"));
+          Serial.println(moduleList[i].address);
+        }
         if(!res){
           Serial.print(F("\nError while setting cell to burn! module:"));
-          Serial.println(moduleList[i].address);
-        }else{
-          Serial.print(F("\nBURNING start! module:"));
           Serial.println(moduleList[i].address);
         }
       }

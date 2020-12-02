@@ -13,24 +13,39 @@ bool CheckTimer(unsigned long &timer, const unsigned long period){
 }
 
 bool getSafetyConditions(bool printDetail){
-   bool voltagesOk = true;
+   voltagesOk = true;
+   validValues = true;
 
-  for(int i=0;i<modulesCount;i++)
+  for(int i=0;i<modulesCount;i++){
+    if(!moduleList[i].validValues){
+      validValues = false;
+      break;
+    }
     if(moduleList[i].voltage <= LIMIT_VOLT_LOW || moduleList[i].voltage >= LIMIT_VOLT_HIGH){
       voltagesOk = false;
       break;
     }
-
-  bool res = voltagesOk && status_eth==1 && modulesCount==REQUIRED_CNT_MODULES;
-  
-  if(!res && printDetail){//print reasons, only if not met
-    Serial.print(F("\nSafety cond - voltages:"));
-    Serial.print(voltagesOk);
-    Serial.print(F(" eth:"));
-    Serial.print(status_eth);
-    Serial.print(F(" modCnt:"));
-    Serial.println(modulesCount);
   }
+
+  bool res = validValues && voltagesOk && status_eth==1 && modulesCount==REQUIRED_CNT_MODULES;
+  
+
+  if(!res){
+    errorStatus = 0;
+    if(status_eth!=1)
+      errorStatus|=ERROR_ETHERNET;
+    if(!validValues)
+      errorStatus|=ERROR_I2C;
+    if(modulesCount!=REQUIRED_CNT_MODULES)
+      errorStatus|=ERROR_MODULE_CNT;
+    if(!voltagesOk)
+      errorStatus|=ERROR_VOLTAGE_RANGES;
+    if(false)
+      errorStatus|=ERROR_TEMP_RANGES;
+      
+  }else
+    errorStatus = 0; // all ok
+
   return res;
 }
 
@@ -49,11 +64,13 @@ bool ReadModuleQuick(struct  cell_module *module) {
       module->validValues = false;//comm failure must happen 3x times to consider values as invalid
     return false;
   }
-  module->voltage = voltage;
-  module->temperature = temperature;
   
-  if (module->voltage >= 0 && module->voltage <= 500 && module->temperature > 0 && module->temperature < 600) {
+  
+  if (voltage >= 0 && voltage <= 500 && temperature > 0 && temperature < 600) {
 
+    module->voltage = voltage;
+    module->temperature = temperature;
+    //update min and max values
     if ( module->voltage > module->maxVoltage ) {
       module->maxVoltage = module->voltage;
     }
@@ -63,20 +80,28 @@ bool ReadModuleQuick(struct  cell_module *module) {
 
     module->validValues = true;
     module->readErrCnt = 0;
+    return true;
   } else {
-    module->validValues = false;
+    Serial.println(F("Resetting module I2C !!!!"));
+    if(!Cell_resetI2c(module->address)){//reset module I2c command
+      Serial.print(F("\nFailed to reset I2C of module:"));
+      Serial.println(module->address);
+    }
+    if(++module->readErrCnt>=3)
+      module->validValues = false;//comm failure must happen 3x times to consider values as invalid
+      return false;
   }
 
-  return true;
+  return false;
 }
 
 bool ReadModule(struct  cell_module *module) {
-  float voltCalib = 0, tempCalib = 0;
+  float voltCalib = 0, tempCalib = 0, voltCalib2 = 0, tempCalib2 = 0;
   bool res = true;
   
   res = ReadModuleQuick(module);
-  res = res && Cell_read_voltage_calibration(module->address, voltCalib);
-  res = res && Cell_read_temperature_calibration(module->address, tempCalib);
+  res = res && Cell_read_voltage_calibration(module->address, voltCalib, voltCalib2);
+  res = res && Cell_read_temperature_calibration(module->address, tempCalib, tempCalib2);
   if(!res){
     Serial.print(F("\nFailed to read Module!"));
     Serial.println(module->address);
@@ -84,6 +109,8 @@ bool ReadModule(struct  cell_module *module) {
   }
   module->voltageCalib = voltCalib;
   module->temperatureCalib = tempCalib;
+  module->voltageCalib2 = voltCalib2;
+  module->temperatureCalib2 = tempCalib2;
   return true;
 }
 
@@ -165,8 +192,12 @@ void PrintModuleInfo(struct  cell_module *module, bool withCal){
   if(withCal){
     Serial.print(F(" VC:"));
     Serial.print(module->voltageCalib,3);
+    Serial.print(F(","));
+    Serial.print(module->voltageCalib2,3);
     Serial.print(F(" TC:"));
     Serial.print(module->temperatureCalib,3);
+    Serial.print(F(","));
+    Serial.print(module->temperatureCalib2,3);
   }
   Serial.print(F(" Valid:"));
   Serial.print(module->validValues);

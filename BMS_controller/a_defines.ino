@@ -10,12 +10,16 @@
 // the IP address for the shield:
 IPAddress ip(192, 168, 0, 12);
 IPAddress ipServer(192, 168, 0, 3); 
+IPAddress dns(192, 168, 0, 4);
+IPAddress gateway(192, 168, 0, 4);
+IPAddress subnet(255, 255, 255, 0);
 
-const byte mac[] = {0xDD, 0xAA, 0xBE, 0xEF, 0xFE, 0xED};
+//never change 0xDE part
+uint8_t mac[] = {0xDE, 0xAA, 0xBE, 0xEF, 0xFE, 0xED};
 
 #define REQUIRED_CNT_MODULES 6
 
-#define REQUIRED_RACK_TEMPERATURE 270 //0,1°C
+#define REQUIRED_RACK_TEMPERATURE 150 //0,1°C
 
 //absolute voltage limits
 #define LIMIT_VOLT_LOW 330 //x10mV
@@ -61,7 +65,9 @@ const byte mac[] = {0xDD, 0xAA, 0xBE, 0xEF, 0xFE, 0xED};
 #define COMMAND_set_temperature_calibration 7
 #define COMMAND_set_bypass_voltage 8
 #define COMMAND_set_load_resistance 9
-
+#define COMMAND_set_voltage_calibration2 10
+#define COMMAND_set_temperature_calibration2 11
+#define COMMAND_resetI2c 12
 
 #define read_voltage 10
 #define read_temperature 11
@@ -72,6 +78,12 @@ const byte mac[] = {0xDD, 0xAA, 0xBE, 0xEF, 0xFE, 0xED};
 #define read_bypass_enabled_state 16
 #define read_bypass_voltage_measurement 17
 #define read_burning_counter 18
+#define read_voltage_calibration2 19
+#define read_temperature_calibration2 20
+
+//---------------------- ERROR STATUS definitions ---------------------------------------------
+
+
 
 //---------------------- STRUCTURES -----------------------------------------------------------
 
@@ -81,8 +93,10 @@ struct cell_module {
   uint16_t voltage;//voltage [10mV]
   uint16_t temperature;//temperature of PTC sensor [0,1°C]
   
-  float voltageCalib;//voltage calibration offset constant
-  float temperatureCalib;//temperature calibration offset constant
+  float voltageCalib;//voltage calibration scaling constant
+  float voltageCalib2;//voltage calibration offset constant
+  float temperatureCalib;//temperature calibration scaling constant
+  float temperatureCalib2;//temperature calibration offset constant
 
   bool factoryReset;
 
@@ -97,6 +111,12 @@ struct cell_module {
 };
 
 //---------------------- VARIABLES -----------------------------------------------------------
+// for overallErrorStatus
+#define ERROR_ETHERNET 0x01
+#define ERROR_I2C 0x02
+#define ERROR_MODULE_CNT 0x04
+#define ERROR_VOLTAGE_RANGES 0x08
+#define ERROR_TEMP_RANGES 0x10
 
 EthernetClient ethClient;
 
@@ -108,7 +128,8 @@ bool xCalibDataRequested;
 //statuses
 uint8_t status_i2c, status_eth;
 uint8_t errorCnt_dataCorrupt, errorCnt_CRCmismatch, errorCnt_BufferFull;
-
+bool voltagesOk,validValues;
+uint8_t errorStatus,errorStatus_cause;
 
 
 

@@ -55,7 +55,9 @@
 #define COMMAND_set_temperature_calibration 7
 #define COMMAND_set_bypass_voltage 8
 #define COMMAND_set_load_resistance 9
-
+#define COMMAND_set_voltage_calibration2 10
+#define COMMAND_set_temperature_calibration2 11
+#define COMMAND_resetI2c 12
 
 #define READOUT_voltage 10
 #define READOUT_temperature 11
@@ -66,7 +68,8 @@
 #define READOUT_bypass_state 16
 #define READOUT_bypass_voltage_measurement 17
 #define READOUT_burningCounter 18
-
+#define READOUT_voltage_calibration2 19
+#define READOUT_temperature_calibration2 20
 
 volatile bool skipNextADC = false;
 volatile uint16_t voltageBuff[OVERSAMPLE_LOOP];
@@ -99,8 +102,10 @@ struct cell_module_config {
   uint8_t SLAVE_ADDR = DEFAULT_SLAVE_ADDR;
   // Calibration factor for voltage readings
   float voltageCalibration = 0.4425;
+  float voltageCalibration2 = 0.0;
   // Calibration factor for temp readings
   float tempSensorCalibration = 0.35;
+  float tempSensorCalibration2 = 0.0;
 };
 
 static cell_module_config currentConfig;

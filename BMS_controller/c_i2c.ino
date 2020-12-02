@@ -37,6 +37,7 @@ bool Send_command(uint8_t cell_id, uint8_t cmd, uint8_t byteValue) {
 bool Send_command(uint8_t cell_id, uint8_t cmd, float floatValue) {
 
   float_to_bytes.val = floatValue;
+  
   bool res = true;
   res = res && I2c._start()==0;
   res = res && I2c._sendAddress(SLA_W(cell_id))==0;
@@ -124,19 +125,35 @@ bool Cell_set_slave_address(uint8_t cell_id, uint8_t newAddress) {
 bool Cell_set_voltage_calibration(uint8_t cell_id, float value) {
   return Send_command(cell_id, cmdByte(COMMAND_set_voltage_calibration ), value);
 }
+bool Cell_set_voltage_calibration2(uint8_t cell_id, float value) {
+  return Send_command(cell_id, cmdByte(COMMAND_set_voltage_calibration2 ), value);
+}
 bool Cell_set_temperature_calibration(uint8_t cell_id, float value) {
   return Send_command(cell_id, cmdByte(COMMAND_set_temperature_calibration ), value);
+}
+bool Cell_set_temperature_calibration2(uint8_t cell_id, float value) {
+  return Send_command(cell_id, cmdByte(COMMAND_set_temperature_calibration2 ), value);
 }
 bool Cell_set_bypass_voltage(uint8_t cell_id, uint16_t  value) {
   return Send_command(cell_id, cmdByte(COMMAND_set_bypass_voltage), value);
 }
+bool Cell_resetI2c(uint8_t cell_id) {
+  return Send_command(cell_id, cmdByte(COMMAND_resetI2c));
+}
+
 
 //READ --------------------------------------------------------------
-bool Cell_read_voltage_calibration(uint8_t cell_id, float &value) {
-  return Read_float_from_cell(cell_id, read_voltage_calibration, value);
+bool Cell_read_voltage_calibration(uint8_t cell_id, float &value, float &value2) {
+  bool res = Read_float_from_cell(cell_id, read_voltage_calibration, value);
+  res = Read_float_from_cell(cell_id, read_voltage_calibration2, value2);
+
+  return res;
 }
-bool Cell_read_temperature_calibration(uint8_t cell_id, float &value) {
-  return Read_float_from_cell(cell_id, read_temperature_calibration, value);
+bool Cell_read_temperature_calibration(uint8_t cell_id, float &value, float &value2) {
+  bool res = Read_float_from_cell(cell_id, read_temperature_calibration, value);
+  res = res && Read_float_from_cell(cell_id, read_temperature_calibration2, value2);
+
+  return res;
 }
 bool Cell_read_voltage(uint8_t cell_id, uint16_t &value) {
   return Read_uint16_from_cell(cell_id, read_voltage, value);

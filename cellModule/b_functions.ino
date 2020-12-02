@@ -126,5 +126,5 @@ float getVoltageMeasurement() {
 
   uint16_t raw = (uint16_t)(sum / OVERSAMPLE_LOOP);
 
-  return (uint16_t)((float)raw * currentConfig.voltageCalibration);
+  return (uint16_t)((float)raw * currentConfig.voltageCalibration + currentConfig.voltageCalibration2);
 }
