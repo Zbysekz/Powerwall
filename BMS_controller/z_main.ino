@@ -35,8 +35,8 @@ void loop() {
       }
     }
 
-    //if(getSafetyConditions(true))
-      //BalanceCells();
+    if(getSafetyConditions(true))
+      BalanceCells();
   }
 
   if(CheckTimer(tmrReadStatistics, 300000L)){//read statistics - each 5mins
@@ -200,6 +200,7 @@ void PowerStateMachine(){
     case 20://CHARGE ONLY - main relay is switched on but UPS's are off
       if(!xSafetyConditions){
         digitalWrite(PIN_MAIN_RELAY, false);
+        errorStatus_cause = errorStatus;//to retain information
         stateMachineStatus = 99;
       }else if (xReqDisconnect){
         digitalWrite(PIN_MAIN_RELAY, false);

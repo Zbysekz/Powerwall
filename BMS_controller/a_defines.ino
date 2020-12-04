@@ -81,7 +81,6 @@ uint8_t mac[] = {0xDE, 0xAA, 0xBE, 0xEF, 0xFE, 0xED};
 #define read_voltage_calibration2 19
 #define read_temperature_calibration2 20
 
-//---------------------- ERROR STATUS definitions ---------------------------------------------
 
 
 
@@ -110,13 +109,17 @@ struct cell_module {
   uint16_t iStatErrCnt, iBurningCnt;//statistics
 };
 
-//---------------------- VARIABLES -----------------------------------------------------------
+//---------------------- ERROR STATUS definitions ---------------------------------------------
+
 // for overallErrorStatus
 #define ERROR_ETHERNET 0x01
 #define ERROR_I2C 0x02
 #define ERROR_MODULE_CNT 0x04
 #define ERROR_VOLTAGE_RANGES 0x08
 #define ERROR_TEMP_RANGES 0x10
+
+
+//---------------------- VARIABLES -----------------------------------------------------------
 
 EthernetClient ethClient;
 
