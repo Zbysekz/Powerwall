@@ -29,6 +29,8 @@ uint8_t mac[] = {0xDE, 0xAA, 0xBE, 0xEF, 0xFE, 0xED};
 #define IMBALANCE_THRESHOLD 10//x10mV
 #define IMBALANCE_THRESHOLD_CHARGED 3//x10mV - same as above, but when is battery considered as fully charged
 
+#define CHARGED_LEVEL 2430//x10mV
+
 #define RXBUFFSIZE 20
 #define RXQUEUESIZE 3
 
@@ -83,6 +85,7 @@ uint8_t mac[] = {0xDE, 0xAA, 0xBE, 0xEF, 0xFE, 0xED};
 
 
 
+#define VOLT_AVG_SAMPLES 3
 
 //---------------------- STRUCTURES -----------------------------------------------------------
 
@@ -91,6 +94,10 @@ struct cell_module {
   uint8_t address; //module address
   uint16_t voltage;//voltage [10mV]
   uint16_t temperature;//temperature of PTC sensor [0,1°C]
+
+  uint16_t voltage_avg;
+  uint16_t voltage_buff[VOLT_AVG_SAMPLES];
+  uint8_t voltAvgPtr;
   
   float voltageCalib;//voltage calibration scaling constant
   float voltageCalib2;//voltage calibration offset constant
@@ -125,7 +132,7 @@ EthernetClient ethClient;
 
 bool xFullReadDone;
 //timers
-unsigned long tmrStartTime,tmrServerComm,tmrScanModules,tmrRetryScan,tmrSendData,tmrReadStatistics;
+unsigned long tmrStartTime,tmrServerComm,tmrScanModules,tmrRetryScan,tmrSendData,tmrReadStatistics,tmrCommTimeout;
 //commands
 bool xCalibDataRequested;
 //statuses
@@ -133,13 +140,12 @@ uint8_t status_i2c, status_eth;
 uint8_t errorCnt_dataCorrupt, errorCnt_CRCmismatch, errorCnt_BufferFull;
 bool voltagesOk,validValues;
 uint8_t errorStatus,errorStatus_cause;
-
+bool xServerEndPacket;
 
 
 uint8_t rxBuffer[RXQUEUESIZE][RXBUFFSIZE];//for first item if >0 command is inside, 0 after it is proccessed
 bool rxBufferMsgReady[RXQUEUESIZE];
 uint8_t rxLen,crcH,crcL,readState,rxPtr,rxBufPtr=0;
-uint16_t crcReal;
 
 
 cell_module moduleList[MODULE_ADDRESS_RANGE_SIZE];

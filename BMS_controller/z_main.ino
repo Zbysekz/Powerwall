@@ -234,17 +234,25 @@ void PowerStateMachine(){
 // 2) we are fully charged, but one or more cells has Z bigger than some small threshold
 void BalanceCells(){
 
+  //calculate sum voltage
+  uint32_t sumVoltage = 0;
+  for(int i=0;i<modulesCount;i++){
+    sumVoltage += moduleList[i].voltage_avg;
+  }
+  uint16_t imbalanceThreshold = 0;
+  if(sumVoltage>=CHARGED_LEVEL)imbalanceThreshold = IMBALANCE_THRESHOLD_CHARGED; else imbalanceThreshold = IMBALANCE_THRESHOLD;
+  
   for(int i=0;i<modulesCount;i++){
     //calculate "Z"
     uint16_t min=999;
     for(int y=0;y<modulesCount;y++)
       if(i!=y){
-        if(moduleList[y].voltage<min)
-          min=moduleList[y].voltage;
+        if(moduleList[y].voltage_avg<min)
+          min=moduleList[y].voltage_avg;
       }
 
-    if(moduleList[i].voltage > min){//if you are the lowest, do not balance
-      if(moduleList[i].voltage - min > IMBALANCE_THRESHOLD){
+    if(moduleList[i].voltage_avg > min){//if you are the lowest, do not balance
+      if(moduleList[i].voltage_avg - min > imbalanceThreshold){
         //start burning for that module
         //only if he is not burning already
 
@@ -252,7 +260,7 @@ void BalanceCells(){
         bool res = Cell_read_bypass_enabled_state(moduleList[i].address, xBurning);
 
         if(res && !xBurning){
-          res = Cell_set_bypass_voltage(moduleList[i].address, min + IMBALANCE_THRESHOLD);// burn to just match imbalance threshold
+          res = Cell_set_bypass_voltage(moduleList[i].address, min + imbalanceThreshold);// burn to just match imbalance threshold
           Serial.print(F("\nBURNING start! module:"));
           Serial.println(moduleList[i].address);
         }

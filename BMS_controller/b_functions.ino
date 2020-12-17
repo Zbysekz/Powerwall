@@ -69,6 +69,19 @@ bool ReadModuleQuick(struct  cell_module *module) {
   if (voltage >= 0 && voltage <= 500 && temperature > 0 && temperature < 600) {
 
     module->voltage = voltage;
+    // calculation of avg value///////////////
+
+    module->voltage_buff[module->voltAvgPtr++] = module->voltage;
+    if(module->voltAvgPtr>=VOLT_AVG_SAMPLES)
+      module->voltAvgPtr = 0;
+
+    module->voltage_avg = 0;
+    for(int i=0;i<VOLT_AVG_SAMPLES;i++)
+      module->voltage_avg+=module->voltage_buff[i];
+    module->voltage_avg/=VOLT_AVG_SAMPLES;
+
+    ////////////////////////////////////////
+    
     module->temperature = temperature;
     //update min and max values
     if ( module->voltage > module->maxVoltage ) {

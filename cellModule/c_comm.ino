@@ -3,9 +3,11 @@
 void requestEvent() {
   switch (cmdByte) {
     case READOUT_voltage:
+      ledFlash = true;
       if (bypassEnabled) {
         sendUnsignedInt(voltageMeasurement_bypass);
       } else {
+        voltageMeasurement = getVoltageMeasurement();
         sendUnsignedInt(voltageMeasurement);
       }
 
@@ -179,13 +181,14 @@ void receiveEvent(uint8_t bytesCnt) {
     cmdByte = 0;
   } else {
     //Its a READ request
-
+    ;
+/*
     switch (cmdByte) {
       case READOUT_voltage:
         voltageMeasurement = getVoltageMeasurement();
         ledFlash = true;
         break;
-    }
+    }*/
   }
 
 }

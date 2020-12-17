@@ -22,7 +22,6 @@ void ProcessReceivedData(uint8_t data[]){
   int res=0;//aux temp
   int len = data[0];
   uint16_t auxVal = 0;
-  float val1,val2;
   
   switch(data[1]){//by ID
     case 0://patern
@@ -150,6 +149,9 @@ void ProcessReceivedData(uint8_t data[]){
         Serial.println(F("MANUALLY BURNING!"));
       }
       break;
+    case 199://ending packet
+      xServerEndPacket = true;
+    break;
     default:
       Serial.println(F("Not defined command!"));
       
@@ -185,7 +187,6 @@ void Receive(uint8_t rcv){
       }else{ 
         readState=3;
         rxPtr=0;
-        crcReal=rxLen;
         //choose empty stack
         rxBufPtr=99;
         for(int i=0;i<RXQUEUESIZE;i++){
@@ -272,7 +273,7 @@ void ExchangeCommunicationWithServer(){
 
       if(xCalibDataRequested){// calibration data
           Serial.println(F("Sending calibration"));
-          for(int i=0;i<modulesCount;i++){
+          for(uint8_t i=0;i<modulesCount;i++){
             PrintModuleInfo(&moduleList[i], true);
 
             float_to_bytes.val = moduleList[i].voltageCalib;
@@ -289,7 +290,7 @@ void ExchangeCommunicationWithServer(){
             byte g = float_to_bytes.buffer[2];
             byte h = float_to_bytes.buffer[3];
             
-            uint8_t sbuf[] = {41+i,(moduleList[i].address-MODULE_ADDRESS_RANGE_START+1)&0xFF,a,b,c,d,e,f,g,h};
+            uint8_t sbuf[] = {uint8_t(41+i),uint8_t((moduleList[i].address-MODULE_ADDRESS_RANGE_START+1)&0xFF),a,b,c,d,e,f,g,h};
   
             int cnt = Send(sbuf,10);
             if(cnt<=0){
@@ -298,9 +299,9 @@ void ExchangeCommunicationWithServer(){
           }
       }else if(xReadyToSendStatistics){
           bool xFail = false;
-          for(int i=0;i<modulesCount;i++){
+          for(uint8_t i=0;i<modulesCount;i++){
               
-              uint8_t sbuf[] = {71+i,(moduleList[i].address-MODULE_ADDRESS_RANGE_START+1)&0xFF,((moduleList[i].iStatErrCnt)&0xFF00)>>8, (moduleList[i].iStatErrCnt)&0xFF,((moduleList[i].iBurningCnt)&0xFF00)>>8, (moduleList[i].iBurningCnt)&0xFF};
+              uint8_t sbuf[] = {uint8_t(71+i),uint8_t((moduleList[i].address-MODULE_ADDRESS_RANGE_START+1)&0xFF),uint8_t(((moduleList[i].iStatErrCnt)&0xFF00)>>8), uint8_t((moduleList[i].iStatErrCnt)&0xFF),uint8_t(((moduleList[i].iBurningCnt)&0xFF00)>>8), uint8_t((moduleList[i].iBurningCnt)&0xFF)};
   
               int cnt = Send(sbuf,6);
               if(cnt<=0){
@@ -315,9 +316,9 @@ void ExchangeCommunicationWithServer(){
         }else{ // normal data
           SendStatus(); 
           if(CheckTimer(tmrSendData, 60000L)){
-            for(int i=0;i<modulesCount;i++){
+            for(uint8_t i=0;i<modulesCount;i++){
               if(moduleList[i].validValues){
-                uint8_t sbuf[] = {11+i,(moduleList[i].address-MODULE_ADDRESS_RANGE_START+1)&0xFF,((moduleList[i].voltage)&0xFF00)>>8, (moduleList[i].voltage)&0xFF,((moduleList[i].temperature)&0xFF00)>>8, (moduleList[i].temperature)&0xFF};
+                uint8_t sbuf[] = {uint8_t(11+i),uint8_t((moduleList[i].address-MODULE_ADDRESS_RANGE_START+1)&0xFF),uint8_t(((moduleList[i].voltage)&0xFF00)>>8), uint8_t((moduleList[i].voltage)&0xFF),uint8_t(((moduleList[i].temperature)&0xFF00)>>8), uint8_t((moduleList[i].temperature)&0xFF)};
     
                 int cnt = Send(sbuf,6);
                 if(cnt<=0){
@@ -327,20 +328,16 @@ void ExchangeCommunicationWithServer(){
             }
           }
       }
-      int timeout = 0;
-      while(!ethClient.available() && timeout++<10){
-        delay(100);//take some time for server to react even on the data that you just sent
-        wdt_reset();
-      }
-      if(ethClient.available())
-        Serial.print(F("\nReceiving data from server! :"));
-      else
-        Serial.println(F("Nothing from server."));
-      while(ethClient.available()){
-        uint8_t rcv = ethClient.read();
-        Serial.print(rcv);
-        Receive(rcv);
-      }
+        tmrCommTimeout = millis();
+        xServerEndPacket = false;
+        while((millis() - tmrCommTimeout <4L*1000) && !xServerEndPacket){
+          wdt_reset();
+          if(ethClient.available()){
+            uint8_t rcv = ethClient.read();
+            Receive(rcv);
+            Serial.println(rcv);
+          }
+        }
   
       ethClient.stop();
     }
