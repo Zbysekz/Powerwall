@@ -70,6 +70,7 @@
 #define READOUT_burningCounter 18
 #define READOUT_voltage_calibration2 19
 #define READOUT_temperature_calibration2 20
+#define READOUT_CRC 21
 
 volatile bool skipNextADC = false;
 volatile uint16_t voltageBuff[OVERSAMPLE_LOOP];
@@ -86,12 +87,16 @@ volatile bool badConfiguration = false;
 volatile uint8_t green_pattern = GREEN_LED_PATTERN_UNCONFIGURED;
 
 
+volatile uint16_t actualTemperature;
 volatile uint16_t voltageMeasurement = 0;
 volatile uint16_t voltageMeasurement_bypass = 0;
 volatile uint16_t last_raw_adc = 0;
 volatile uint16_t targetBypassVoltage = 0;
-volatile uint8_t bypassCnt = 0,iBurningCounter=0;
+volatile uint8_t bypassCnt = 0;
+volatile uint16_t iBurningCounter=0;
 volatile boolean bypassEnabled = false;
+volatile uint8_t CRC_tempVolt;
+
 
 boolean inPanicMode = false;
 uint16_t error_counter = 0;

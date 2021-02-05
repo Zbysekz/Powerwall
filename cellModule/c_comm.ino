@@ -6,9 +6,11 @@ void requestEvent() {
       ledFlash = true;
       if (bypassEnabled) {
         sendUnsignedInt(voltageMeasurement_bypass);
+        CRC_tempVolt = uint8_t(voltageMeasurement_bypass&0xFF)+uint8_t((voltageMeasurement_bypass&0xFF00) >> 8);
       } else {
         voltageMeasurement = getVoltageMeasurement();
         sendUnsignedInt(voltageMeasurement);
+        CRC_tempVolt = uint8_t(voltageMeasurement&0xFF)+uint8_t((voltageMeasurement&0xFF00) >> 8);
       }
 
       break;
@@ -23,13 +25,14 @@ void requestEvent() {
     case READOUT_error_counter:
       sendUnsignedInt(error_counter);
       break;
-
     case READOUT_bypass_state:
       sendByte(bypassEnabled);
       break;
 
     case READOUT_temperature:
-      sendUnsignedInt((uint16_t)((float)tempSensorValue * currentConfig.tempSensorCalibration + currentConfig.tempSensorCalibration2));
+      actualTemperature = (uint16_t)((float)tempSensorValue * currentConfig.tempSensorCalibration + currentConfig.tempSensorCalibration2);
+      sendUnsignedInt(actualTemperature);
+      CRC_tempVolt += uint8_t(actualTemperature&0xFF)+uint8_t((actualTemperature&0xFF00) >> 8);
       break;
 
     case READOUT_voltage_calibration:
@@ -47,6 +50,9 @@ void requestEvent() {
     case READOUT_burningCounter:
       sendUnsignedInt(iBurningCounter);
       iBurningCounter = 0;//resest after it is read
+      break;
+    case READOUT_CRC:
+      sendByte(CRC_tempVolt);
       break;
 
     default:
@@ -83,7 +89,7 @@ void receiveEvent(uint8_t bytesCnt) {
   if (bitRead(cmdByte, COMMAND_BIT)) {
 
     bitClear(cmdByte, COMMAND_BIT);
-
+    
     switch (cmdByte) {
       case COMMAND_green_led_pattern:
         if (bytesCnt == 1) {
