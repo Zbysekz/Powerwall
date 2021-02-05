@@ -143,6 +143,11 @@ bool Cell_resetI2c(uint8_t cell_id) {
 
 
 //READ --------------------------------------------------------------
+
+bool Cell_read_CRC(uint8_t cell_id, uint8_t &value) {
+  return Read_uint8_t_from_cell(cell_id, read_CRC, value);
+}
+
 bool Cell_read_voltage_calibration(uint8_t cell_id, float &value, float &value2) {
   bool res = Read_float_from_cell(cell_id, read_voltage_calibration, value);
   res = Read_float_from_cell(cell_id, read_voltage_calibration2, value2);

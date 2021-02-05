@@ -15,6 +15,7 @@ bool CheckTimer(unsigned long &timer, const unsigned long period){
 bool getSafetyConditions(bool printDetail){
    voltagesOk = true;
    validValues = true;
+   temperaturesOk = true;
 
   for(int i=0;i<modulesCount;i++){
     if(!moduleList[i].validValues){
@@ -23,24 +24,24 @@ bool getSafetyConditions(bool printDetail){
     }
     if(moduleList[i].voltage <= LIMIT_VOLT_LOW || moduleList[i].voltage >= LIMIT_VOLT_HIGH){
       voltagesOk = false;
-      break;
+    }
+    if(moduleList[i].temperature <= LIMIT_RACK_TEMPERATURE_LOW || moduleList[i].temperature >= LIMIT_RACK_TEMPERATURE_HIGH){
+      temperaturesOk = false;
     }
   }
 
-  bool res = validValues && voltagesOk && status_eth==1 && modulesCount==REQUIRED_CNT_MODULES;
+  bool res = validValues && voltagesOk && modulesCount==REQUIRED_CNT_MODULES && temperaturesOk;
   
 
   if(!res){
     errorStatus = 0;
-    if(status_eth!=1)
-      errorStatus|=ERROR_ETHERNET;
     if(!validValues)
       errorStatus|=ERROR_I2C;
     if(modulesCount!=REQUIRED_CNT_MODULES)
       errorStatus|=ERROR_MODULE_CNT;
     if(!voltagesOk)
       errorStatus|=ERROR_VOLTAGE_RANGES;
-    if(false)
+    if(!temperaturesOk)
       errorStatus|=ERROR_TEMP_RANGES;
       
   }else
@@ -53,10 +54,32 @@ bool getSafetyConditions(bool printDetail){
 
 bool ReadModuleQuick(struct  cell_module *module) {
   uint16_t voltage = 0, temperature = 0;
-  bool res = true;
+  uint8_t CRCVoltTemp = 0;
+  bool res;
+
+  uint8_t trials = 3;
+
+  while(trials>0){
+    res = true;
+    res = Cell_read_voltage(module->address, voltage);
+    res = res && Cell_read_board_temp(module->address, temperature);
+    res = res && Cell_read_CRC(module->address, CRCVoltTemp);
+
+    uint8_t realCRC = uint8_t(voltage&0xFF)+uint8_t((voltage&0xFF00) >> 8) + uint8_t(temperature&0xFF)+uint8_t((temperature&0xFF00) >> 8);
+    
+    if (CRCVoltTemp != realCRC){
+      Serial.print(F("\nCRC mismatch in read Mod.quick!"));
+      Serial.println(realCRC);
+      Serial.println(CRCVoltTemp);
+      crcMismatchCounter ++;
+
+      res = false;
+    }
+    if(res)break;
+    trials--;
+  }
   
-  res = Cell_read_voltage(module->address, voltage);
-  res = res && Cell_read_board_temp(module->address, temperature);
+  
   if(!res){
     Serial.print(F("\nFailed to read Mod.quick!"));
     Serial.println(module->address);
@@ -102,7 +125,7 @@ bool ReadModuleQuick(struct  cell_module *module) {
     }
     if(++module->readErrCnt>=3)
       module->validValues = false;//comm failure must happen 3x times to consider values as invalid
-      return false;
+    return false;
   }
 
   return false;
@@ -165,7 +188,6 @@ uint8_t Provision() {//finding cell modules with default addresses
         Serial.print(F("Successfuly assigned address:"));
         Serial.println(address);
         return address;
-        break;
       }
     }
   } 

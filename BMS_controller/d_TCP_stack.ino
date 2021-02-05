@@ -299,11 +299,22 @@ void ExchangeCommunicationWithServer(){
           }
       }else if(xReadyToSendStatistics){
           bool xFail = false;
+
+          uint8_t sbuf[] = {69,uint8_t(iHeatingEnergyCons&0xFF),uint8_t((iHeatingEnergyCons&0xFF00)>>8), uint8_t(crcMismatchCounter)};
+
+          int cnt = Send(sbuf,4);
+          if(cnt<=0){
+            Serial.println(F("Sending statistics failed!"));
+            xFail = true;
+          }else{
+            iHeatingEnergyCons = 0;
+            crcMismatchCounter = 0;
+          }
+          
           for(uint8_t i=0;i<modulesCount;i++){
-              
-              uint8_t sbuf[] = {uint8_t(71+i),uint8_t((moduleList[i].address-MODULE_ADDRESS_RANGE_START+1)&0xFF),uint8_t(((moduleList[i].iStatErrCnt)&0xFF00)>>8), uint8_t((moduleList[i].iStatErrCnt)&0xFF),uint8_t(((moduleList[i].iBurningCnt)&0xFF00)>>8), uint8_t((moduleList[i].iBurningCnt)&0xFF)};
+              uint8_t sbuf2[] = {uint8_t(71+i),uint8_t((moduleList[i].address-MODULE_ADDRESS_RANGE_START+1)&0xFF),uint8_t(((moduleList[i].iStatErrCnt)&0xFF00)>>8), uint8_t((moduleList[i].iStatErrCnt)&0xFF),uint8_t(((moduleList[i].iBurningCnt)&0xFF00)>>8), uint8_t((moduleList[i].iBurningCnt)&0xFF)};
   
-              int cnt = Send(sbuf,6);
+              cnt = Send(sbuf2,6);
               if(cnt<=0){
                 Serial.println(F("Sending statistics failed!"));
                 xFail = true;
@@ -318,9 +329,9 @@ void ExchangeCommunicationWithServer(){
           if(CheckTimer(tmrSendData, 60000L)){
             for(uint8_t i=0;i<modulesCount;i++){
               if(moduleList[i].validValues){
-                uint8_t sbuf[] = {uint8_t(11+i),uint8_t((moduleList[i].address-MODULE_ADDRESS_RANGE_START+1)&0xFF),uint8_t(((moduleList[i].voltage)&0xFF00)>>8), uint8_t((moduleList[i].voltage)&0xFF),uint8_t(((moduleList[i].temperature)&0xFF00)>>8), uint8_t((moduleList[i].temperature)&0xFF)};
+                uint8_t sbuf2[] = {uint8_t(11+i),uint8_t((moduleList[i].address-MODULE_ADDRESS_RANGE_START+1)&0xFF),uint8_t(((moduleList[i].voltage)&0xFF00)>>8), uint8_t((moduleList[i].voltage)&0xFF),uint8_t(((moduleList[i].temperature)&0xFF00)>>8), uint8_t((moduleList[i].temperature)&0xFF)};
     
-                int cnt = Send(sbuf,6);
+                int cnt = Send(sbuf2,6);
                 if(cnt<=0){
                   Serial.println(F("Sending data failed!"));
                 } 

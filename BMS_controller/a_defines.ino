@@ -21,6 +21,10 @@ uint8_t mac[] = {0xDE, 0xAA, 0xBE, 0xEF, 0xFE, 0xED};
 
 #define REQUIRED_RACK_TEMPERATURE 150 //0,1°C
 
+//temperature ok limits
+#define LIMIT_RACK_TEMPERATURE_LOW 50 //0,1°C
+#define LIMIT_RACK_TEMPERATURE_HIGH 500 //0,1°C
+
 //absolute voltage limits
 #define LIMIT_VOLT_LOW 330 //x10mV
 #define LIMIT_VOLT_HIGH 420 //x10mV
@@ -82,6 +86,7 @@ uint8_t mac[] = {0xDE, 0xAA, 0xBE, 0xEF, 0xFE, 0xED};
 #define read_burning_counter 18
 #define read_voltage_calibration2 19
 #define read_temperature_calibration2 20
+#define read_CRC 21
 
 
 
@@ -138,7 +143,7 @@ bool xCalibDataRequested;
 //statuses
 uint8_t status_i2c, status_eth;
 uint8_t errorCnt_dataCorrupt, errorCnt_CRCmismatch, errorCnt_BufferFull;
-bool voltagesOk,validValues;
+bool voltagesOk,validValues,temperaturesOk;
 uint8_t errorStatus,errorStatus_cause;
 bool xServerEndPacket;
 
@@ -153,6 +158,7 @@ uint8_t modulesCount=0;
 
 //HEATING
 bool xHeating;
+uint16_t iHeatingEnergyCons;
 
 //StateMachine
 uint8_t stateMachineStatus,iBtnStartCnt;
@@ -164,7 +170,7 @@ bool xReadyToSendStatistics;
 //aux vars
 uint8_t iFailCommCnt;
 
-
+uint16_t crcMismatchCounter;
 
 
 union {

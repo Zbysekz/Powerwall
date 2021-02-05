@@ -9,6 +9,9 @@ void loop() {
     ExchangeCommunicationWithServer();
 
     ControlHeating();
+
+    if(xHeating)//count energy if we are heating rack
+      if(iHeatingEnergyCons<65535)iHeatingEnergyCons ++;
   }
   
   PowerStateMachine();//state machine for relay power control
