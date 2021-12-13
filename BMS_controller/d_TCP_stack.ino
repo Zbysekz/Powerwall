@@ -21,15 +21,15 @@ int Send(uint8_t d[],uint8_t d_len){
 void ProcessReceivedData(uint8_t data[]){
   int res=0;//aux temp
   int len = data[0];
-  uint16_t auxVal = 0;
+  //uint16_t auxVal = 0;
   
   switch(data[1]){//by ID
     case 0://patern
-      Serial.print(F("\nLED pattern:"));
-      if(!Cell_green_led_pattern(data[2], data[3]))
-        Serial.println(F("failed"));
-      else
-        Serial.println(F("ok"));
+      //Serial.print(F("\nLED pattern:"));
+      Cell_green_led_pattern(data[2], data[3]);
+        //Serial.println(F("failed"));
+      //else
+        //Serial.println(F("ok"));
     break;
     case 1:
       ScanI2C();
@@ -55,11 +55,11 @@ void ProcessReceivedData(uint8_t data[]){
       
       res = Cell_set_voltage_calibration(data[2],float_to_bytes.val);
       if(res){
-        Serial.println(F("Success"));
+        //Serial.println(F("Success"));
         ReadModules(false);//read all fully
-      }else{
+      }/*else{
         Serial.print(F("Failed!"));
-       }
+       }*/
     break;
     case 15: // set voltage calibration to specific cell
       float_to_bytes.buffer[0]=data[3];
@@ -67,17 +67,17 @@ void ProcessReceivedData(uint8_t data[]){
       float_to_bytes.buffer[2]=data[5];
       float_to_bytes.buffer[3]=data[6];
       
-      Serial.print(F("Calibrating voltage for module:"));
-      Serial.println(data[2]);
-      Serial.println(float_to_bytes.val,3);
+      //Serial.print(F("Calibrating voltage for module:"));
+      //Serial.println(data[2]);
+      //Serial.println(float_to_bytes.val,3);
       
       res = Cell_set_voltage_calibration2(data[2],float_to_bytes.val);
       if(res){
-        Serial.println(F("Success"));
+        //Serial.println(F("Success"));
         ReadModules(false);//read all fully
-      }else{
+      }/*else{
         Serial.print(F("Failed!"));
-       }
+       }*/
     break;
     case 5: // set temperature calibration to specific cell
       float_to_bytes.buffer[0]=data[3];
@@ -85,17 +85,17 @@ void ProcessReceivedData(uint8_t data[]){
       float_to_bytes.buffer[2]=data[5];
       float_to_bytes.buffer[3]=data[6];
       
-      Serial.print(F("Calibrating temperature for module:"));
-      Serial.println(data[2]);
-      Serial.println(float_to_bytes.val,3);
+      //Serial.print(F("Calibrating temperature for module:"));
+      //Serial.println(data[2]);
+      //Serial.println(float_to_bytes.val,3);
       
       res = Cell_set_temperature_calibration(data[2],float_to_bytes.val);
       if(res){
-        Serial.println(F("Success"));
+        //Serial.println(F("Success"));
         ReadModules(false);//read all fully
-      }else{
+      }/*else{
         Serial.print(F("Failed!"));
-       }
+       }*/
     break;
     case 16: // set temperature calibration to specific cell
       float_to_bytes.buffer[0]=data[3];
@@ -103,23 +103,23 @@ void ProcessReceivedData(uint8_t data[]){
       float_to_bytes.buffer[2]=data[5];
       float_to_bytes.buffer[3]=data[6];
       
-      Serial.print(F("Calibrating temperature for module:"));
-      Serial.println(data[2]);
-      Serial.println(float_to_bytes.val,3);
+      //Serial.print(F("Calibrating temperature for module:"));
+      //Serial.println(data[2]);
+      //Serial.println(float_to_bytes.val,3);
       
       res = Cell_set_temperature_calibration2(data[2],float_to_bytes.val);
       if(res){
-        Serial.println(F("Success"));
+        //Serial.println(F("Success"));
         ReadModules(false);//read all fully
-      }else{
+      }/*else{
         Serial.print(F("Failed!"));
-       }
+       }*/
     break;
     case 6:
-      if(Cell_read_raw_voltage(data[2], auxVal)){
-        Serial.print(F("Read:"));
+      /*if(Cell_read_raw_voltage(data[2], auxVal)){
+        //Serial.print(F("Read:"));
         Serial.println(auxVal);
-      }
+      }*/
     break;
     case 7:
       if(len==3){
@@ -189,9 +189,9 @@ void Receive(uint8_t rcv){
         rxPtr=0;
         //choose empty stack
         rxBufPtr=99;
-        for(int i=0;i<RXQUEUESIZE;i++){
-          if(rxBufferMsgReady[i]==false)
-            rxBufPtr=i;
+        for(gi=0;gi<RXQUEUESIZE;gi++){
+          if(rxBufferMsgReady[gi]==false)
+            rxBufPtr=gi;
         }
         if(rxBufPtr==99){
           if(errorCnt_BufferFull<255)errorCnt_BufferFull++;
@@ -237,12 +237,12 @@ void Receive(uint8_t rcv){
 }
 
 //calculation of CRC16, corresponds to CRC-16/XMODEM on https://crccalc.com/﻿
-uint16_t CRC16(uint8_t* bytes, uint8_t length)
+uint16_t CRC16(uint8_t* bytes, uint8_t _len)
 {
     const uint16_t generator = 0x1021; /* divisor is 16bit */
     uint16_t crc = 0; /* CRC value is 16bit */
 
-    for (int b=0;b<length;b++)
+    for (int b=0;b<_len;b++)
     {
         crc ^= (uint16_t)(bytes[b] << 8); /* move byte into MSB of 16bit CRC */
 
@@ -263,6 +263,7 @@ uint16_t CRC16(uint8_t* bytes, uint8_t length)
 
 void ExchangeCommunicationWithServer(){
 
+    int cnt = 0;//aux var
     int retCon = ethClient.connect(ipServer, 23);
     if (retCon!=1) {
           Serial.print(F("Connection to server failed! error code:"));
@@ -290,9 +291,18 @@ void ExchangeCommunicationWithServer(){
             byte g = float_to_bytes.buffer[2];
             byte h = float_to_bytes.buffer[3];
             
-            uint8_t sbuf[] = {uint8_t(41+i),uint8_t((moduleList[i].address-MODULE_ADDRESS_RANGE_START+1)&0xFF),a,b,c,d,e,f,g,h};
-  
-            int cnt = Send(sbuf,10);
+            sendBuff[0] = uint8_t(41+i);
+            sendBuff[1] = uint8_t((moduleList[i].address-MODULE_ADDRESS_RANGE_START+1)&0xFF);
+            sendBuff[2] = a;
+            sendBuff[3] = b;
+            sendBuff[4] = c;
+            sendBuff[5] = d;
+            sendBuff[6] = e;
+            sendBuff[7] = f;
+            sendBuff[8] = g;
+            sendBuff[9] = h;
+            
+            cnt = Send(sendBuff,10);
             if(cnt<=0){
               Serial.println(F("Sending calibration failed!"));
             }
@@ -300,9 +310,12 @@ void ExchangeCommunicationWithServer(){
       }else if(xReadyToSendStatistics){
           bool xFail = false;
 
-          uint8_t sbuf[] = {69,uint8_t(iHeatingEnergyCons&0xFF),uint8_t((iHeatingEnergyCons&0xFF00)>>8), uint8_t(crcMismatchCounter)};
+          sendBuff[0] = 69;
+          sendBuff[1] = uint8_t(iHeatingEnergyCons&0xFF);
+          sendBuff[2] = uint8_t((iHeatingEnergyCons&0xFF00)>>8);
+          sendBuff[3] = uint8_t(crcMismatchCounter);
 
-          int cnt = Send(sbuf,4);
+          cnt = Send(sendBuff,4);
           if(cnt<=0){
             Serial.println(F("Sending statistics failed!"));
             xFail = true;
@@ -312,9 +325,16 @@ void ExchangeCommunicationWithServer(){
           }
           
           for(uint8_t i=0;i<modulesCount;i++){
-              uint8_t sbuf2[] = {uint8_t(71+i),uint8_t((moduleList[i].address-MODULE_ADDRESS_RANGE_START+1)&0xFF),uint8_t(((moduleList[i].iStatErrCnt)&0xFF00)>>8), uint8_t((moduleList[i].iStatErrCnt)&0xFF),uint8_t(((moduleList[i].iBurningCnt)&0xFF00)>>8), uint8_t((moduleList[i].iBurningCnt)&0xFF)};
+              float ff[1024];
+              ff[0] = ff[22]+3+3;
+              sendBuff[0] = uint8_t(71+i);
+              sendBuff[1] = uint8_t((moduleList[i].address-MODULE_ADDRESS_RANGE_START+1)&0xFF);
+              sendBuff[2] = uint8_t(((moduleList[i].iStatErrCnt)&0xFF00)>>8);
+              sendBuff[3] = uint8_t((moduleList[i].iStatErrCnt)&0xFF);
+              sendBuff[4] = uint8_t(((moduleList[i].iBurningCnt)&0xFF00)>>8);
+              sendBuff[5] = uint8_t((moduleList[i].iBurningCnt)&0xFF);
   
-              cnt = Send(sbuf2,6);
+              cnt = Send(sendBuff,6);
               if(cnt<=0){
                 Serial.println(F("Sending statistics failed!"));
                 xFail = true;
@@ -329,9 +349,15 @@ void ExchangeCommunicationWithServer(){
           if(CheckTimer(tmrSendData, 60000L)){
             for(uint8_t i=0;i<modulesCount;i++){
               if(moduleList[i].validValues){
-                uint8_t sbuf2[] = {uint8_t(11+i),uint8_t((moduleList[i].address-MODULE_ADDRESS_RANGE_START+1)&0xFF),uint8_t(((moduleList[i].voltage)&0xFF00)>>8), uint8_t((moduleList[i].voltage)&0xFF),uint8_t(((moduleList[i].temperature)&0xFF00)>>8), uint8_t((moduleList[i].temperature)&0xFF)};
-    
-                int cnt = Send(sbuf2,6);
+                
+                sendBuff[0] = uint8_t(11+i);
+                sendBuff[1] = uint8_t((moduleList[i].address-MODULE_ADDRESS_RANGE_START+1)&0xFF);
+                sendBuff[2] = uint8_t(((moduleList[i].voltage_avg)&0xFF00)>>8);
+                sendBuff[3] = uint8_t((moduleList[i].voltage_avg)&0xFF);
+                sendBuff[4] = uint8_t(((moduleList[i].temperature_avg)&0xFF00)>>8);
+                sendBuff[5] = uint8_t((moduleList[i].temperature_avg)&0xFF);
+                
+                cnt = Send(sendBuff,6);
                 if(cnt<=0){
                   Serial.println(F("Sending data failed!"));
                 } 
@@ -346,7 +372,7 @@ void ExchangeCommunicationWithServer(){
           if(ethClient.available()){
             uint8_t rcv = ethClient.read();
             Receive(rcv);
-            Serial.println(rcv);
+            //Serial.println(rcv);
           }
         }
   
@@ -355,10 +381,15 @@ void ExchangeCommunicationWithServer(){
 }
 
 void SendStatus(){
-  uint8_t sbuf[] = {10,stateMachineStatus,errorStatus,errorStatus_cause};
-    
-  int cnt = Send(sbuf,4);
-  if(cnt<=0){
+  sendBuff[0] = 10;
+  sendBuff[1] = stateMachineStatus;
+  sendBuff[2] = errorStatus;
+  sendBuff[3] = errorStatus_cause;
+  sendBuff[4] = ((uint8_t)xHeating<<1) | ((uint8_t)solarConnected<<0); // various states
+  sendBuff[5] = (uint8_t)errorWhichModule;
+  
+  int cnt_ = Send(sendBuff,6);
+  if(cnt_<=0){
     Serial.println(F("Sending status failed!"));
   } 
 }

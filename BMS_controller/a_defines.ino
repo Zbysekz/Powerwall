@@ -19,19 +19,21 @@ uint8_t mac[] = {0xDE, 0xAA, 0xBE, 0xEF, 0xFE, 0xED};
 
 #define REQUIRED_CNT_MODULES 6
 
-#define REQUIRED_RACK_TEMPERATURE 150 //0,1°C
+#define REQUIRED_RACK_TEMPERATURE 100 //0,1°C
 
 //temperature ok limits
 #define LIMIT_RACK_TEMPERATURE_LOW 50 //0,1°C
 #define LIMIT_RACK_TEMPERATURE_HIGH 500 //0,1°C
 
 //absolute voltage limits
-#define LIMIT_VOLT_LOW 330 //x10mV
+#define LIMIT_VOLT_LOW2 310 //x10mV - absolute limit, goes to error if below
+#define LIMIT_VOLT_LOW 330 //x10mV - limit for auto transition from run to charge
 #define LIMIT_VOLT_HIGH 420 //x10mV
+#define LIMIT_VOLT_HIGH2 430 //x10mV
 
 //balancing thresholds
 #define IMBALANCE_THRESHOLD 10//x10mV
-#define IMBALANCE_THRESHOLD_CHARGED 3//x10mV - same as above, but when is battery considered as fully charged
+#define IMBALANCE_THRESHOLD_CHARGED 2//x10mV - same as above, but when is battery considered as fully charged
 
 #define CHARGED_LEVEL 2430//x10mV
 
@@ -42,10 +44,10 @@ uint8_t mac[] = {0xDE, 0xAA, 0xBE, 0xEF, 0xFE, 0xED};
 //Default i2c SLAVE address (used for auto provision of address)
 #define DEFAULT_SLAVE_ADDR 21
 
-//Configured cell modules use i2c addresses 24 to 36 (12S)
+//Configured cell modules use i2c addresses up to (7S)
 //See http://www.i2c-bus.org/addressing/
 #define MODULE_ADDRESS_RANGE_START 24
-#define MODULE_ADDRESS_RANGE_SIZE 12
+#define MODULE_ADDRESS_RANGE_SIZE 7
 
 #define MODULE_ADDRESS_RANGE_END (MODULE_ADDRESS_RANGE_START + MODULE_ADDRESS_RANGE_SIZE)
 
@@ -56,6 +58,7 @@ uint8_t mac[] = {0xDE, 0xAA, 0xBE, 0xEF, 0xFE, 0xED};
 #define PIN_HEATING 2
 
 #define PIN_UPS_BTN 7
+#define PIN_SOLAR_IN 8
 
 //---------------------- COMMAND DEFINES -----------------------------------------------------------
 
@@ -90,7 +93,8 @@ uint8_t mac[] = {0xDE, 0xAA, 0xBE, 0xEF, 0xFE, 0xED};
 
 
 
-#define VOLT_AVG_SAMPLES 3
+#define VOLT_AVG_SAMPLES 6
+#define TEMP_AVG_SAMPLES 6
 
 //---------------------- STRUCTURES -----------------------------------------------------------
 
@@ -103,6 +107,10 @@ struct cell_module {
   uint16_t voltage_avg;
   uint16_t voltage_buff[VOLT_AVG_SAMPLES];
   uint8_t voltAvgPtr;
+
+  uint16_t temperature_avg;
+  uint16_t temperature_buff[TEMP_AVG_SAMPLES];
+  uint8_t tempAvgPtr;
   
   float voltageCalib;//voltage calibration scaling constant
   float voltageCalib2;//voltage calibration offset constant
@@ -135,9 +143,11 @@ struct cell_module {
 
 EthernetClient ethClient;
 
+uint8_t sendBuff[32];
+
 bool xFullReadDone;
 //timers
-unsigned long tmrStartTime,tmrServerComm,tmrScanModules,tmrRetryScan,tmrSendData,tmrReadStatistics,tmrCommTimeout;
+unsigned long tmrStartTime,tmrServerComm,tmrScanModules,tmrRetryScan,tmrSendData,tmrReadStatistics,tmrCommTimeout,tmrDelayAfterSolarReconnect;
 //commands
 bool xCalibDataRequested;
 //statuses
@@ -145,13 +155,14 @@ uint8_t status_i2c, status_eth;
 uint8_t errorCnt_dataCorrupt, errorCnt_CRCmismatch, errorCnt_BufferFull;
 bool voltagesOk,validValues,temperaturesOk;
 uint8_t errorStatus,errorStatus_cause;
-bool xServerEndPacket;
+bool xServerEndPacket,oneOfCellIsLow, oneOfCellIsHigh, solarConnected;
 
-
+int errorWhichModule;
 uint8_t rxBuffer[RXQUEUESIZE][RXBUFFSIZE];//for first item if >0 command is inside, 0 after it is proccessed
 bool rxBufferMsgReady[RXQUEUESIZE];
 uint8_t rxLen,crcH,crcL,readState,rxPtr,rxBufPtr=0;
 
+int gi;//for for loops in switch-case
 
 cell_module moduleList[MODULE_ADDRESS_RANGE_SIZE];
 uint8_t modulesCount=0;
@@ -159,6 +170,7 @@ uint8_t modulesCount=0;
 //HEATING
 bool xHeating;
 uint16_t iHeatingEnergyCons;
+uint8_t iDutyCycleHeat;
 
 //StateMachine
 uint8_t stateMachineStatus,iBtnStartCnt;
@@ -171,6 +183,8 @@ bool xReadyToSendStatistics;
 uint8_t iFailCommCnt;
 
 uint16_t crcMismatchCounter;
+
+uint16_t tempErrorLatch;
 
 
 union {

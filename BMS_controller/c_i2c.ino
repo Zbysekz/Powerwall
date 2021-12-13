@@ -73,7 +73,7 @@ uint8_t cmdByte(uint8_t cmd) {
 bool Read_uint16_from_cell(uint8_t cell_id, uint8_t cmd, uint16_t &value) {
   if(!Send_command(cell_id, cmd))
     return false;
-  uint8_t ret = I2c.read(cell_id, 2);
+  uint8_t ret = I2c.read(cell_id, (uint8_t)2);
 
   if(ret == 0 && I2c.available()==2){
     uint8_t high = I2c.receive();
@@ -86,7 +86,7 @@ bool Read_uint16_from_cell(uint8_t cell_id, uint8_t cmd, uint16_t &value) {
 bool Read_uint8_t_from_cell(uint8_t cell_id, uint8_t cmd, uint8_t &value) {
   if(!Send_command(cell_id, cmd))
     return false;
-  uint8_t ret = I2c.read(cell_id, 1);
+  uint8_t ret = I2c.read(cell_id, (uint8_t)1);
 
   if(ret == 0 && I2c.available()==1){
     value = I2c.receive();
@@ -97,7 +97,7 @@ bool Read_uint8_t_from_cell(uint8_t cell_id, uint8_t cmd, uint8_t &value) {
 bool Read_float_from_cell(uint8_t cell_id, uint8_t cmd, float &value) {
   if(!Send_command(cell_id, cmd))
     return false;
-  uint8_t ret = I2c.read(cell_id, 4);
+  uint8_t ret = I2c.read(cell_id, (uint8_t)4);
 
   if(ret == 0 && I2c.available()==4){
     float_to_bytes.buffer[0] = I2c.receive();

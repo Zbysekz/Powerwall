@@ -17,10 +17,12 @@ void setup() {
   pinMode(PIN_MAIN_RELAY, OUTPUT);
   pinMode(PIN_HEATING, OUTPUT);
   pinMode(PIN_UPS_BTN, OUTPUT);
+  pinMode(PIN_SOLAR_IN, OUTPUT);
   
   digitalWrite(PIN_MAIN_RELAY, false);
   digitalWrite(PIN_HEATING, false);
   digitalWrite(PIN_UPS_BTN, false);
+  digitalWrite(PIN_SOLAR_IN, false);
 
 
   ////////////////////////////////////////////////////////////////////////////////////////////
@@ -50,6 +52,7 @@ void setup() {
   
   tmrStartTime = millis();
   stateMachineStatus=0;
+  solarConnected = true;
 
   Serial.println(F("\nSetup finished."));
 }

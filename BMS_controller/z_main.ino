@@ -13,7 +13,18 @@ void loop() {
     if(xHeating)//count energy if we are heating rack
       if(iHeatingEnergyCons<65535)iHeatingEnergyCons ++;
   }
-  
+
+  if(oneOfCellIsHigh){
+      solarConnected = false;
+      tmrDelayAfterSolarReconnect = millis();
+  }else{
+    if ((unsigned long)(millis() - tmrDelayAfterSolarReconnect) > 600000L){
+      solarConnected = true;//connect again
+    }
+  }
+
+  digitalWrite(PIN_SOLAR_IN, solarConnected);
+      
   PowerStateMachine();//state machine for relay power control
 
   
@@ -28,17 +39,22 @@ void loop() {
     }else{
       Serial.println(F("Error in scanning modules"));
       status_i2c = 2;//error in reading
-      if(iFailCommCnt++>3){
-        Serial.println(F("Communication failure several times, scanning restart"));
+      iFailCommCnt++;
+      if(iFailCommCnt==2){
+        xFullReadDone = false;//do complete scan
+      }
+      if(iFailCommCnt>3){
+        Serial.println(F("Comm.fail.,scan restart"));
         iFailCommCnt = 0;
         modulesCount = 0;
         I2c.end(); //restart I2C hw
         delay(500);
         I2c.begin();
       }
+      
     }
 
-    if(getSafetyConditions(true))
+    if(getSafetyConditions())
       BalanceCells();
   }
 
@@ -51,7 +67,7 @@ void loop() {
       res = res && Cell_read_burning_counter(moduleList[i].address, iBurnCnt);
 
       if(!res){
-        Serial.print(F("\nError in reading statistics for module:"));
+        Serial.print(F("\nErr in reading stats:"));
         Serial.println(moduleList[i].address);
         moduleList[i].iStatErrCnt = 0;
         moduleList[i].iBurningCnt = 0;
@@ -97,8 +113,8 @@ void ControlHeating(){
 
   Serial.print(F("\nModules:"));
   Serial.println(modulesCount);
-  Serial.print(F("\nActualTemp:"));
-  Serial.println(actualTemp);
+  //Serial.print(F("\nActualTemp:"));
+  //Serial.println(actualTemp);
 
   if(cnt>0){
     if(actualTemp < REQUIRED_RACK_TEMPERATURE - 1){
@@ -110,15 +126,20 @@ void ControlHeating(){
     }
   }else xHeating = false;//no valid values, no heating, but will report error
 
-  if(xHeating)
+  if(xHeating && iDutyCycleHeat==0) // the heating element has 300W, so we need to do low duty cycle to not overheat
     digitalWrite(PIN_HEATING, true);
   else
     digitalWrite(PIN_HEATING, false);
+
+  if(iDutyCycleHeat++>=6){ // duty cycle 1:6
+    iDutyCycleHeat = 0;
+  }
+  
 }
 
 void PowerStateMachine(){
  
-  bool xSafetyConditions = getSafetyConditions(false);
+  bool xSafetyConditions = getSafetyConditions();
 
 
   switch (stateMachineStatus){
@@ -169,7 +190,7 @@ void PowerStateMachine(){
     break;
     case 10://RUN - discharging, possibly also charging at same time
 
-      if (xReqDisconnect || !xSafetyConditions){
+      if (xReqDisconnect || !xSafetyConditions || xReqChargeOnly || oneOfCellIsLow){
         
         tmrDelay=millis();
         digitalWrite(PIN_UPS_BTN, true);
@@ -178,12 +199,23 @@ void PowerStateMachine(){
           Serial.println(F("EMERGENCY shutdown"));
           errorStatus_cause = errorStatus;//to retain information
           xEmergencyShutDown = true;
-        }else
+        }else if (xReqChargeOnly)Serial.println(F("Going from RUN to charge only"));
+        else
           Serial.println(F("Disconnect shutdown"));
-        stateMachineStatus = 14;
+        
+        if(xSafetyConditions && (xReqChargeOnly || oneOfCellIsLow))
+          stateMachineStatus = 13;
+        else
+          stateMachineStatus = 14;
       }
     break;
-    case 14://WAIT STOP BUTTON
+    case 13://WAIT STOP BUTTON - from RUN to CHARGE ONLY
+      if(CheckTimer(tmrDelay, 2000L)){
+        digitalWrite(PIN_UPS_BTN, false);
+        stateMachineStatus = 20;
+      }
+    break;
+    case 14://WAIT STOP BUTTON - shutdown
       if(CheckTimer(tmrDelay, 2000L)){
         digitalWrite(PIN_UPS_BTN, false);
         stateMachineStatus = 15;
@@ -208,6 +240,10 @@ void PowerStateMachine(){
       }else if (xReqDisconnect){
         digitalWrite(PIN_MAIN_RELAY, false);
         stateMachineStatus = 0;
+      }else if (xReqRun){
+        tmrDelay=millis();
+        stateMachineStatus = 1;
+        Serial.println(F("GOING from CHARGE TO RUN"));
       }
     break;
     
@@ -264,14 +300,14 @@ void BalanceCells(){
 
         if(res && !xBurning){
           res = Cell_set_bypass_voltage(moduleList[i].address, min + imbalanceThreshold);// burn to just match imbalance threshold
-          Serial.print(F("\nBURNING start! module:"));
+          //Serial.print(F("\nBURNING start! module:"));
           Serial.println(moduleList[i].address);
         }
         if(!res){
-          Serial.print(F("\nError while setting cell to burn! module:"));
+          //Serial.print(F("\nError while setting cell to burn! module:"));
           Serial.println(moduleList[i].address);
         }
       }
     }
-  }
+  }  
 }
