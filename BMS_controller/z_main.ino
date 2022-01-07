@@ -131,7 +131,7 @@ void ControlHeating(){
   else
     digitalWrite(PIN_HEATING, false);
 
-  if(iDutyCycleHeat++>=6){ // duty cycle 1:6
+  if(iDutyCycleHeat++>=3){ // duty cycle 1:3
     iDutyCycleHeat = 0;
   }
   
