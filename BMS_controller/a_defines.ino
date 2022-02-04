@@ -145,7 +145,7 @@ EthernetClient ethClient;
 
 uint8_t sendBuff[32];
 
-bool xFullReadDone;
+bool xFullReadDone,xSafetyConditions;
 //timers
 unsigned long tmrStartTime,tmrServerComm,tmrScanModules,tmrRetryScan,tmrSendData,tmrReadStatistics,tmrCommTimeout,tmrDelayAfterSolarReconnect;
 //commands

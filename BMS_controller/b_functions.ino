@@ -49,7 +49,6 @@ bool getSafetyConditions(){
   
 
   if(!res){
-    errorStatus = 0;
     if(!validValues)
       errorStatus|=ERROR_I2C;
     if(modulesCount!=REQUIRED_CNT_MODULES)

@@ -24,7 +24,9 @@ void loop() {
   }
 
   digitalWrite(PIN_SOLAR_IN, solarConnected);
-      
+
+  xSafetyConditions = getSafetyConditions();
+  
   PowerStateMachine();//state machine for relay power control
 
   
@@ -54,7 +56,7 @@ void loop() {
       
     }
 
-    if(getSafetyConditions())
+    if(xSafetyConditions)
       BalanceCells();
   }
 
@@ -138,9 +140,6 @@ void ControlHeating(){
 }
 
 void PowerStateMachine(){
- 
-  bool xSafetyConditions = getSafetyConditions();
-
 
   switch (stateMachineStatus){
     case 0://IDLE - diconnected state

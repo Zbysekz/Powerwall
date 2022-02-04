@@ -54,5 +54,6 @@ void setup() {
   stateMachineStatus=0;
   solarConnected = true;
 
+  SendEventStart();
   Serial.println(F("\nSetup finished."));
 }

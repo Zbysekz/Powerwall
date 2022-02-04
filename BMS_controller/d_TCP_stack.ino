@@ -380,6 +380,16 @@ void ExchangeCommunicationWithServer(){
     }
 }
 
+void SendEventStart(){
+  sendBuff[0] = 1;
+  sendBuff[1] = 0;
+  
+  int cnt_ = Send(sendBuff,2);
+  if(cnt_<=0){
+    Serial.println(F("Sending status failed!"));
+  } 
+}
+
 void SendStatus(){
   sendBuff[0] = 10;
   sendBuff[1] = stateMachineStatus;
