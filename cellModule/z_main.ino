@@ -70,11 +70,12 @@ ISR(TIMER1_COMPA_vect) // timer interrupt
       //We are in bypass and just filled in whole buffer with voltage measurements
       voltageMeasurement_bypass = getVoltageMeasurement();
 
-      if (targetBypassVoltage >= voltageMeasurement_bypass) {//We have reached the goal
+      if (targetBypassVoltage >= voltageMeasurement_bypass || cntBurnCycles >= MAX_BURN_CYCLES) {//We have reached the goal
         bypass_off();
         green_pattern = GREEN_LED_PATTERN_STANDARD;
       } else { //Keep burning
         bypassCnt = BYPASS_COUNTER_MAX;
+        cntBurnCycles++;
       }
     }
 

@@ -43,6 +43,8 @@
 //Number of voltage readings to take before we take a temperature reading
 #define TEMP_READING_LOOP_FREQ 16
 
+#define MAX_BURN_CYCLES 100 // protection for not burning too long
+
 //If we receive a cmdByte with BIT 6 set its a command byte so there is another byte waiting for us to process
 #define COMMAND_BIT 6
 
@@ -81,6 +83,7 @@ volatile bool voltageBufferReady = 0;
 volatile uint8_t tempReadingCnt = 0;
 volatile uint8_t cmdByte = 0;
 volatile uint8_t i2cTmr = 255;
+volatile uint8_t cntBurnCycles = 0;
 
 volatile bool ledFlash = false;
 volatile bool badConfiguration = false;
