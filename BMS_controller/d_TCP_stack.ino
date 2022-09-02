@@ -381,13 +381,21 @@ void ExchangeCommunicationWithServer(){
 }
 
 void SendEventStart(){
-  sendBuff[0] = 1;
+  sendBuff[0] = 5;
   sendBuff[1] = 0;
   
-  int cnt_ = Send(sendBuff,2);
-  if(cnt_<=0){
-    Serial.println(F("Sending status failed!"));
-  } 
+  int retCon = ethClient.connect(ipServer, 23);
+    if (retCon!=1) {
+          Serial.print(F("Connection to server failed! error code:"));
+          Serial.println(retCon);
+          status_eth = 30;
+    } else {
+      int cnt_ = Send(sendBuff,2);
+      if(cnt_<=0){
+        Serial.println(F("Sending status failed!"));
+      } 
+      ethClient.stop();
+    }
 }
 
 void SendStatus(){
