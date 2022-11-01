@@ -17,7 +17,7 @@ IPAddress subnet(255, 255, 255, 0);
 //never change 0xDE part
 uint8_t mac[] = {0xDE, 0xAA, 0xBE, 0xEF, 0xFE, 0xED};
 
-#define REQUIRED_CNT_MODULES 6
+#define REQUIRED_CNT_MODULES 12
 
 #define REQUIRED_RACK_TEMPERATURE 100 //0,1°C
 
@@ -44,10 +44,10 @@ uint8_t mac[] = {0xDE, 0xAA, 0xBE, 0xEF, 0xFE, 0xED};
 //Default i2c SLAVE address (used for auto provision of address)
 #define DEFAULT_SLAVE_ADDR 21
 
-//Configured cell modules use i2c addresses up to (7S)
+//Configured cell modules use i2c addresses up to (12S)
 //See http://www.i2c-bus.org/addressing/
 #define MODULE_ADDRESS_RANGE_START 24
-#define MODULE_ADDRESS_RANGE_SIZE 7
+#define MODULE_ADDRESS_RANGE_SIZE 12
 
 #define MODULE_ADDRESS_RANGE_END (MODULE_ADDRESS_RANGE_START + MODULE_ADDRESS_RANGE_SIZE)
 
