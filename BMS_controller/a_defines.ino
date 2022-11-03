@@ -55,6 +55,7 @@ uint8_t mac[] = {0xDE, 0xAA, 0xBE, 0xEF, 0xFE, 0xED};
 #define PIN_MAIN_RELAY 5
 #define PIN_SOLAR_CONTACTOR 8
 #define PIN_OUTPUT_DCAC_BREAKER 9
+#define PIN_VENTILATOR 10
 
 //---------------------- COMMAND DEFINES -----------------------------------------------------------
 
@@ -121,6 +122,7 @@ struct cell_module {
 
   uint8_t readErrCnt;//how much times we had reading error
   bool validValues;//if we have few read errors or the values are not in good range, they are not valid
+  bool burning; // if module is burning or not
 
   uint16_t iStatErrCnt, iBurningCnt;//statistics
 };

@@ -17,10 +17,12 @@ void setup() {
   pinMode(PIN_MAIN_RELAY, OUTPUT);
   pinMode(PIN_SOLAR_CONTACTOR, OUTPUT);
   pinMode(PIN_OUTPUT_DCAC_BREAKER, OUTPUT);
-  
+  pinMode(PIN_VENTILATOR, OUTPUT);
+
   digitalWrite(PIN_MAIN_RELAY, false);
   digitalWrite(PIN_SOLAR_CONTACTOR, false);
   digitalWrite(PIN_OUTPUT_DCAC_BREAKER, false);
+  digitalWrite(PIN_VENTILATOR, false);
 
   ////////////////////////////////////////////////////////////////////////////////////////////
   

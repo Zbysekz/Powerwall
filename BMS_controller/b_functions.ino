@@ -80,6 +80,7 @@ bool ReadModuleQuick(struct  cell_module *module) {
     res = Cell_read_voltage(module->address, voltage);
     res = res && Cell_read_board_temp(module->address, temperature);
     res = res && Cell_read_CRC(module->address, CRCVoltTemp);
+    res = res && Cell_read_bypass_enabled_state(module->address, xBurning);
 
     uint8_t realCRC = uint8_t(voltage&0xFF)+uint8_t((voltage&0xFF00) >> 8) + uint8_t(temperature&0xFF)+uint8_t((temperature&0xFF00) >> 8);
     
@@ -148,6 +149,8 @@ bool ReadModuleQuick(struct  cell_module *module) {
     if ( module->voltage < module->minVoltage ) {
       module->minVoltage = module->voltage;
     }
+
+    module->burning = xBurning;
 
     module->validValues = true;
     module->readErrCnt = 0;

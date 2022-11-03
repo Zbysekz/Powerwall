@@ -22,7 +22,7 @@ void loop() {
   }
 
   //digitalWrite(PIN_SOLAR_IN, solarConnected);
-
+  //digitalWrite(PIN_VENTILATOR, xHeating || );
   xSafetyConditions = getSafetyConditions();
   
   PowerStateMachine();//state machine for relay power control
@@ -226,17 +226,14 @@ void BalanceCells(){
       if(moduleList[i].voltage_avg - min > imbalanceThreshold){
         //start burning for that module
         //only if he is not burning already
-
-        uint8_t xBurning = 0;
-        bool res = Cell_read_bypass_enabled_state(moduleList[i].address, xBurning);
-
-        if(res && !xBurning){
+        bool res = true;
+        if(!moduleList[i].burning){
           res = Cell_set_bypass_voltage(moduleList[i].address, min + imbalanceThreshold);// burn to just match imbalance threshold
           //Serial.print(F("\nBURNING start! module:"));
           Serial.println(moduleList[i].address);
         }
         if(!res){
-          //Serial.print(F("\nError while setting cell to burn! module:"));
+          Serial.print(F("\nError while setting cell to burn! module:"));
           Serial.println(moduleList[i].address);
         }
       }
