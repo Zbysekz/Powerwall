@@ -15,15 +15,12 @@ void setup() {
 
   //inputs/outputs
   pinMode(PIN_MAIN_RELAY, OUTPUT);
-  pinMode(PIN_HEATING, OUTPUT);
-  pinMode(PIN_UPS_BTN, OUTPUT);
-  pinMode(PIN_SOLAR_IN, OUTPUT);
+  pinMode(PIN_SOLAR_CONTACTOR, OUTPUT);
+  pinMode(PIN_OUTPUT_DCAC_BREAKER, OUTPUT);
   
   digitalWrite(PIN_MAIN_RELAY, false);
-  digitalWrite(PIN_HEATING, false);
-  digitalWrite(PIN_UPS_BTN, false);
-  digitalWrite(PIN_SOLAR_IN, false);
-
+  digitalWrite(PIN_SOLAR_CONTACTOR, false);
+  digitalWrite(PIN_OUTPUT_DCAC_BREAKER, false);
 
   ////////////////////////////////////////////////////////////////////////////////////////////
   

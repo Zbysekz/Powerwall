@@ -8,8 +8,6 @@ void loop() {
   if(CheckTimer(tmrServerComm, 10000L)){
     ExchangeCommunicationWithServer();
 
-    ControlHeating();
-
     if(xHeating)//count energy if we are heating rack
       if(iHeatingEnergyCons<65535)iHeatingEnergyCons ++;
   }
@@ -23,15 +21,13 @@ void loop() {
     }
   }
 
-  digitalWrite(PIN_SOLAR_IN, solarConnected);
+  //digitalWrite(PIN_SOLAR_IN, solarConnected);
 
   xSafetyConditions = getSafetyConditions();
   
   PowerStateMachine();//state machine for relay power control
-
   
   ProcessReceivedData();//process received data from server
-
   
   if(CheckTimer(tmrScanModules, 5000L)){//read modules periodically & balance
     
@@ -86,7 +82,6 @@ void loop() {
     xFullReadDone = false; // if we have not all modules, keep scanning for them
   }
 
-
   //wait some time after boot-up or after provisioning, scan modules and read fully
   if(!xFullReadDone && (unsigned long)(millis() - tmrStartTime) > 3000L){
     ScanModules();
@@ -98,54 +93,31 @@ void loop() {
 }
 
 void ControlHeating(){
-  //calculate actual temperature
-  uint32_t actualTemp=0;
-  uint16_t cnt=0;
-  //go through every active module and make avg temp
+  //go through every active module and calculate median temperature (better than avg)
+  bool atLeastOneValid = false;
   for(int i=0;i<modulesCount;i++){
     if(moduleList[i].validValues){
-      actualTemp+=moduleList[i].temperature;
-      cnt++;
+      temperature_median.add(moduleList[i].temperature);
+      atLeastOneValid = true;
     }
   }
-  if(cnt!=0)
-    actualTemp/=cnt;
-  else
-    actualTemp=0;
-
-  Serial.print(F("\nModules:"));
-  Serial.println(modulesCount);
-  //Serial.print(F("\nActualTemp:"));
-  //Serial.println(actualTemp);
-
-  if(cnt>0){
-    if(actualTemp < REQUIRED_RACK_TEMPERATURE - 1){
+  
+  if(atLeastOneValid){
+    if(temperature_median.getMedian() < REQUIRED_RACK_TEMPERATURE - 1){
       xHeating = true;
     }
   
-    if(actualTemp > REQUIRED_RACK_TEMPERATURE + 1){
+    if(temperature_median.getMedian() > REQUIRED_RACK_TEMPERATURE + 1){
       xHeating = false;
     }
   }else xHeating = false;//no valid values, no heating, but will report error
-
-  if(xHeating && iDutyCycleHeat==0) // the heating element has 300W, so we need to do low duty cycle to not overheat
-    digitalWrite(PIN_HEATING, true);
-  else
-    digitalWrite(PIN_HEATING, false);
-
-  if(iDutyCycleHeat++>=3){ // duty cycle 1:3
-    iDutyCycleHeat = 0;
-  }
-  
 }
 
 void PowerStateMachine(){
 
   switch (stateMachineStatus){
     case 0://IDLE - diconnected state
-      digitalWrite(PIN_MAIN_RELAY, false);
-      digitalWrite(PIN_UPS_BTN, false);    
-      
+      digitalWrite(PIN_MAIN_RELAY, false);      
 
       if(xSafetyConditions && xReqRun){
         digitalWrite(PIN_MAIN_RELAY, true);
@@ -161,38 +133,15 @@ void PowerStateMachine(){
       }
       
     break;
-    
-    // UPS can be after start in "sleep" mode, alternating between "On-Line" and "overload" LEDs
-    // this happens usually when battery is cut off in run. We need to push start button shortly to switch it off, then can be started by holding long btn start
-  
     case 1://WAIT TO CONTACTOR
       if(CheckTimer(tmrDelay, 1000L)){
-        digitalWrite(PIN_UPS_BTN, true);//push start button for short time
-        delay(200);
-        digitalWrite(PIN_UPS_BTN, false);
         tmrDelay=millis();
-        stateMachineStatus = 2;
-      }
-    break;
-    case 2://WAIT PAUSE
-      if(CheckTimer(tmrDelay, 1000L)){
-        tmrDelay=millis();
-        digitalWrite(PIN_UPS_BTN, true);
-        stateMachineStatus = 3;
-      }
-    break;
-    case 3://WAIT LONG START BUTTON
-      if(CheckTimer(tmrDelay, 2500L)){
-        digitalWrite(PIN_UPS_BTN, false);
         stateMachineStatus = 10;
       }
     break;
     case 10://RUN - discharging, possibly also charging at same time
-
       if (xReqDisconnect || !xSafetyConditions || xReqChargeOnly || oneOfCellIsLow){
-        
         tmrDelay=millis();
-        digitalWrite(PIN_UPS_BTN, true);
 
         if(!xSafetyConditions){
           Serial.println(F("EMERGENCY shutdown"));
@@ -203,24 +152,12 @@ void PowerStateMachine(){
           Serial.println(F("Disconnect shutdown"));
         
         if(xSafetyConditions && (xReqChargeOnly || oneOfCellIsLow))
-          stateMachineStatus = 13;
+          stateMachineStatus = 20;
         else
-          stateMachineStatus = 14;
+          stateMachineStatus = 15;
       }
     break;
-    case 13://WAIT STOP BUTTON - from RUN to CHARGE ONLY
-      if(CheckTimer(tmrDelay, 2000L)){
-        digitalWrite(PIN_UPS_BTN, false);
-        stateMachineStatus = 20;
-      }
-    break;
-    case 14://WAIT STOP BUTTON - shutdown
-      if(CheckTimer(tmrDelay, 2000L)){
-        digitalWrite(PIN_UPS_BTN, false);
-        stateMachineStatus = 15;
-      }
-    break;
-    case 15://WAIT FOR UPS SHUTDOWN
+    case 15:
       if(CheckTimer(tmrDelay, 1000L)){
         digitalWrite(PIN_MAIN_RELAY, false);
 
@@ -231,7 +168,7 @@ void PowerStateMachine(){
       }
     break;
 
-    case 20://CHARGE ONLY - main relay is switched on but UPS's are off
+    case 20://CHARGE ONLY - main relay is switched on, solar breaker is also on but contactor behind DC/AC is off
       if(!xSafetyConditions){
         digitalWrite(PIN_MAIN_RELAY, false);
         errorStatus_cause = errorStatus;//to retain information
@@ -248,15 +185,12 @@ void PowerStateMachine(){
     
     case 99://ERROR
       digitalWrite(PIN_MAIN_RELAY, false);
-      digitalWrite(PIN_UPS_BTN, false);
       xEmergencyShutDown = false;
       if(xReqErrorReset){
         stateMachineStatus = 0;
       }
-
     break;
     default:;
-    
   }
 
   //reset all signals after one iteration
@@ -264,7 +198,6 @@ void PowerStateMachine(){
   xReqChargeOnly = false;
   xReqDisconnect = false;
   xReqErrorReset = false;
-  
 }
 
 //Balancing is done by burning energy on cell modules, cases:

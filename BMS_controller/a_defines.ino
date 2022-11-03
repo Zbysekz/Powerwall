@@ -3,10 +3,10 @@
 #include <SPI.h>
 #include <I2C.h>//library from https://github.com/rambo/I2C
 #include <avr/wdt.h>
+#include <RunningMedian.h> // bob tillard running median
 
 
 //---------------------- SYSTEM PARAMETERS ---------------------------------------------------------
-
 // the IP address for the shield:
 IPAddress ip(192, 168, 0, 12);
 IPAddress ipServer(192, 168, 0, 3); 
@@ -22,20 +22,20 @@ uint8_t mac[] = {0xDE, 0xAA, 0xBE, 0xEF, 0xFE, 0xED};
 #define REQUIRED_RACK_TEMPERATURE 100 //0,1°C
 
 //temperature ok limits
-#define LIMIT_RACK_TEMPERATURE_LOW 50 //0,1°C
+#define LIMIT_RACK_TEMPERATURE_LOW 70 //0,1°C
 #define LIMIT_RACK_TEMPERATURE_HIGH 500 //0,1°C
 
 //absolute voltage limits
 #define LIMIT_VOLT_LOW2 310 //x10mV - absolute limit, goes to error if below
 #define LIMIT_VOLT_LOW 330 //x10mV - limit for auto transition from run to charge
-#define LIMIT_VOLT_HIGH 420 //x10mV
-#define LIMIT_VOLT_HIGH2 430 //x10mV
+#define LIMIT_VOLT_HIGH 410 //x10mV
+#define LIMIT_VOLT_HIGH2 415 //x10mV
 
 //balancing thresholds
 #define IMBALANCE_THRESHOLD 10//x10mV
 #define IMBALANCE_THRESHOLD_CHARGED 2//x10mV - same as above, but when is battery considered as fully charged
 
-#define CHARGED_LEVEL 2430//x10mV
+#define CHARGED_LEVEL 4920//x10mV voltage when battery is considered as fully charged
 
 #define RXBUFFSIZE 20
 #define RXQUEUESIZE 3
@@ -51,14 +51,10 @@ uint8_t mac[] = {0xDE, 0xAA, 0xBE, 0xEF, 0xFE, 0xED};
 
 #define MODULE_ADDRESS_RANGE_END (MODULE_ADDRESS_RANGE_START + MODULE_ADDRESS_RANGE_SIZE)
 
-
 //---------------------- PIN DEFINITIONS -----------------------------------------------------------
-
 #define PIN_MAIN_RELAY 5
-#define PIN_HEATING 2
-
-#define PIN_UPS_BTN 7
-#define PIN_SOLAR_IN 8
+#define PIN_SOLAR_CONTACTOR 8
+#define PIN_OUTPUT_DCAC_BREAKER 9
 
 //---------------------- COMMAND DEFINES -----------------------------------------------------------
 
@@ -130,7 +126,6 @@ struct cell_module {
 };
 
 //---------------------- ERROR STATUS definitions ---------------------------------------------
-
 // for overallErrorStatus
 #define ERROR_ETHERNET 0x01
 #define ERROR_I2C 0x02
@@ -156,6 +151,7 @@ uint8_t errorCnt_dataCorrupt, errorCnt_CRCmismatch, errorCnt_BufferFull;
 bool voltagesOk,validValues,temperaturesOk;
 uint8_t errorStatus,errorStatus_cause;
 bool xServerEndPacket,oneOfCellIsLow, oneOfCellIsHigh, solarConnected;
+uint8_t iFailCommCnt;
 
 int errorWhichModule;
 uint8_t rxBuffer[RXQUEUESIZE][RXBUFFSIZE];//for first item if >0 command is inside, 0 after it is proccessed
@@ -170,22 +166,19 @@ uint8_t modulesCount=0;
 //HEATING
 bool xHeating;
 uint16_t iHeatingEnergyCons;
-uint8_t iDutyCycleHeat;
 
 //StateMachine
-uint8_t stateMachineStatus,iBtnStartCnt;
+uint8_t stateMachineStatus;
 unsigned long tmrDelay;
 //commands
 bool xReqRun,xReqChargeOnly,xReqDisconnect,xReqErrorReset;
 bool xEmergencyShutDown;
 bool xReadyToSendStatistics;
 //aux vars
-uint8_t iFailCommCnt;
 
 uint16_t crcMismatchCounter;
 
-uint16_t tempErrorLatch;
-
+RunningMedian temperature_median = RunningMedian(5);
 
 union {
   float val;
