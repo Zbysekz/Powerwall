@@ -69,7 +69,7 @@ bool getSafetyConditions(){
 
 bool ReadModuleQuick(struct  cell_module *module) {
   uint16_t voltage = 0, temperature = 0;
-  uint8_t CRCVoltTemp = 0;
+  uint8_t CRCVoltTemp = 0,xBurning = 0;
   bool res;
 
   Serial.print(F("\nQuickRead:"));
