@@ -9,7 +9,7 @@
   This is the code for the cell module (one is needed for each series cell in a modular battery array (pack))
   This code runs on ATTINY85 processors and compiles with Arduino 1.8.13 environment
   You will need a seperate programmer to program the ATTINY chips - another Arduino can be used
-  Settings ATTINY85, 8MHZ INTERNAL CLOCK, LTO enabled, BOD disabled, Timer1=CPU
+  Settings ATTINY85, 8MHZ INTERNAL CLOCK, LTO enabled, BOD enabled, Timer1=CPU
   Use this board manager for ATTINY85
   http://drazzy.com/package_drazzy.com_index.json
   not this one https://raw.githubusercontent.com/damellis/attiny/ide-1.6.x-boards-manager/package_damellis_attiny_index.json

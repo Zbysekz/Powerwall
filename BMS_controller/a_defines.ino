@@ -52,6 +52,8 @@ uint8_t mac[] = {0xDE, 0xAA, 0xBE, 0xEF, 0xFE, 0xED};
 #define MODULE_ADDRESS_RANGE_END (MODULE_ADDRESS_RANGE_START + MODULE_ADDRESS_RANGE_SIZE)
 
 //---------------------- PIN DEFINITIONS -----------------------------------------------------------
+// pinout rozvadec
+// cerna GND; fialova 13; pruhledna 12; modra 11; oranzova 10; bila 9; zelena 8; cervena 7; zluta 6
 #define PIN_MAIN_RELAY 5
 #define PIN_SOLAR_CONTACTOR 8
 #define PIN_OUTPUT_DCAC_BREAKER 9
