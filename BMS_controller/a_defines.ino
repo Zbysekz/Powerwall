@@ -27,9 +27,9 @@ uint8_t mac[] = {0xDE, 0xAA, 0xBE, 0xEF, 0xFE, 0xED};
 
 //absolute voltage limits
 #define LIMIT_VOLT_LOW2 310 //x10mV - absolute limit, goes to error if below
-#define LIMIT_VOLT_LOW 330 //x10mV - limit for auto transition from run to charge
-#define LIMIT_VOLT_HIGH 410 //x10mV
-#define LIMIT_VOLT_HIGH2 415 //x10mV
+#define LIMIT_VOLT_LOW 325 //x10mV - limit for auto transition from run to charge
+#define LIMIT_VOLT_HIGH 408 //x10mV
+#define LIMIT_VOLT_HIGH2 412 //x10mV
 
 //balancing thresholds
 #define IMBALANCE_THRESHOLD 10//x10mV
@@ -54,10 +54,10 @@ uint8_t mac[] = {0xDE, 0xAA, 0xBE, 0xEF, 0xFE, 0xED};
 //---------------------- PIN DEFINITIONS -----------------------------------------------------------
 // pinout rozvadec
 // cerna GND; fialova 13; pruhledna 12; modra 11; oranzova 10; bila 9; zelena 8; cervena 7; zluta 6
-#define PIN_MAIN_RELAY 5
-#define PIN_SOLAR_CONTACTOR 8
-#define PIN_OUTPUT_DCAC_BREAKER 9
-#define PIN_VENTILATOR 10
+#define PIN_MAIN_RELAY 8
+#define PIN_SOLAR_CONTACTOR 10
+#define PIN_OUTPUT_DCAC_BREAKER 11
+#define PIN_VENTILATOR 10 
 
 //---------------------- COMMAND DEFINES -----------------------------------------------------------
 
