@@ -108,7 +108,7 @@ bool ReadModuleQuick(struct  cell_module *module) {
     if(++(module->readErrCnt)>=3)
       module->validValues = false;//comm failure must happen 3x times to consider values as invalid
     return false;
-  }SendEvent(5,0);
+  }
   
   //limit values to prevent affecting average too much - in case of one fail value
   voltage = min(500,voltage);
