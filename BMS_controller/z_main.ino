@@ -12,14 +12,14 @@ void loop() {
       if(iHeatingEnergyCons<65535)iHeatingEnergyCons ++;
   }
 
-  if(oneOfCellIsHigh){
+  /*if(oneOfCellIsHigh){
       solarConnected = false;
       tmrDelayAfterSolarReconnect = millis();
   }else{
     if ((unsigned long)(millis() - tmrDelayAfterSolarReconnect) > 600000L){
       solarConnected = true;//connect again
     }
-  }
+  }*/
 
   //digitalWrite(PIN_SOLAR_IN, solarConnected);
   //digitalWrite(PIN_VENTILATOR, xHeating || );
@@ -35,14 +35,14 @@ void loop() {
       status_i2c = 1;//ok
       iFailCommCnt=0;
     }else{
-      Serial.println(F("Error in scanning modules"));
+      Log(F("Error in scanning modules"));
       status_i2c = 2;//error in reading
       iFailCommCnt++;
       if(iFailCommCnt==2){
         xFullReadDone = false;//do complete scan
       }
       if(iFailCommCnt>3){
-        Serial.println(F("Comm.fail.,scan restart"));
+        Log(F("Comm.fail.,scan restart"));
         iFailCommCnt = 0;
         modulesCount = 0;
         I2c.end(); //restart I2C hw
@@ -120,14 +120,14 @@ void PowerStateMachine(){
       if(xSafetyConditions && xReqRun){
         tmrDelay=millis();
         nextState = 1;
-        Serial.println(F("CONNECTING for RUN"));
+        Log(F("CONNECTING for RUN"));
         SendEvent(5,1);
       }
       else if(xSafetyConditions && xReqChargeOnly){
         digitalWrite(PIN_MAIN_RELAY, true);
         tmrDelay=millis();
         nextState = 20;
-        Serial.println(F("CONNECTING for CHARGE only"));
+        Log(F("CONNECTING for CHARGE only"));
         SendEvent(5,2);
       }
       
@@ -144,19 +144,19 @@ void PowerStateMachine(){
           errorStatus_cause = errorStatus;//to retain information
           xEmergencyShutDown = true;
           nextState = 99;
-          Serial.println(F("EMERGENCY shutdown"));
+          Log(F("EMERGENCY shutdown"));
           SendEvent(5,3);
       }
       else if ((xReqChargeOnly || oneOfCellIsLow)){
         nextState = 20;
-        Serial.println(F("Going from RUN to charge only"));
+        Log(F("Going from RUN to charge only"));
         SendEvent(5,4);
       }else if (xReqDisconnect){
         nextState = 0;
-        Serial.println(F("Disconnect shutdown"));
+        Log(F("Disconnect shutdown"));
         SendEvent(5,5);
       }
-
+      break;
     case 20://CHARGE ONLY - main relay is switched on, solar breaker is also on but contactor behind DC/AC is off
       if(!xSafetyConditions){
         errorStatus_cause = errorStatus;//to retain information
@@ -166,7 +166,7 @@ void PowerStateMachine(){
       }else if (xReqRun){
         tmrDelay=millis();
         nextState = 1;
-        Serial.println(F("GOING from CHARGE TO RUN"));
+        Log(F("GOING from CHARGE TO RUN"));
         SendEvent(5,6);
       }
     break;

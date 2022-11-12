@@ -1,6 +1,6 @@
 
 void ScanI2C() {
-  Serial.println(F("Start scanning"));
+  Log(F("Start scanning"));
   for (uint8_t address = 1; address <= 127; address++ )
   {
     if (PingModule(address) == true) {

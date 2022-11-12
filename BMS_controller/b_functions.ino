@@ -143,12 +143,12 @@ bool ReadModuleQuick(struct  cell_module *module) {
     
     
     //update min and max values
-    if ( module->voltage > module->maxVoltage ) {
+    /*if ( module->voltage > module->maxVoltage ) {
       module->maxVoltage = module->voltage;
     }
     if ( module->voltage < module->minVoltage ) {
       module->minVoltage = module->voltage;
-    }
+    }*/
 
     module->burning = xBurning;
 
@@ -248,8 +248,8 @@ void ScanModules() {
       
       moduleList[modulesCount].address = address;
       moduleList[modulesCount].validValues = false;
-      moduleList[modulesCount].minVoltage = 0xFFFF;
-      moduleList[modulesCount].maxVoltage = 0;
+      //moduleList[modulesCount].minVoltage = 0xFFFF;
+      //moduleList[modulesCount].maxVoltage = 0;
       
       modulesCount++;
     }
@@ -258,7 +258,7 @@ void ScanModules() {
 }
 
 void PrintModuleInfo(struct  cell_module *module, bool withCal){
-  Serial.print(F("Address: "));
+ /* Serial.print(F("Address: "));
   Serial.print(module->address);
   Serial.print(F(" V:"));
   Serial.print(module->voltage);
@@ -276,7 +276,26 @@ void PrintModuleInfo(struct  cell_module *module, bool withCal){
   }
   Serial.print(F(" Valid:"));
   Serial.print(module->validValues);
-  Serial.println();
+  Serial.println();*/
 }
 
 // END --------------------------------- Module operations ------------------------------------------ END
+
+void Log(const __FlashStringHelper *str){
+// open the file. note that only one file can be open at a time,
+  // so you have to close this one before opening another.
+  String filename = String(SDcardFileIndex);
+  File dataFile = SD.open(filename+".log", FILE_WRITE);
+
+  // if the file is available, write to it:
+  if (dataFile) {
+    dataFile.println(str);
+    dataFile.close();
+  }
+  // if the file isn't open, pop up an error:
+  else {
+    Serial.println("error opening log file");
+  }
+  // print to the serial port too:
+  Serial.println(str);
+}
