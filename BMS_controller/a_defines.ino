@@ -4,7 +4,7 @@
 #include <I2C.h>//library from https://github.com/rambo/I2C
 #include <avr/wdt.h>
 #include <RunningMedian.h> // bob tillard running median
-
+#include <SD.h>
 
 //---------------------- SYSTEM PARAMETERS ---------------------------------------------------------
 // the IP address for the shield:
@@ -116,11 +116,11 @@ struct cell_module {
   float temperatureCalib;//temperature calibration scaling constant
   float temperatureCalib2;//temperature calibration offset constant
 
-  bool factoryReset;
+  //bool factoryReset;
 
   //Record min/max volts over time (between cpu resets)
-  uint16_t minVoltage;
-  uint16_t maxVoltage;
+  //uint16_t minVoltage;
+  //uint16_t maxVoltage;
 
   uint8_t readErrCnt;//how much times we had reading error
   bool validValues;//if we have few read errors or the values are not in good range, they are not valid
@@ -142,11 +142,11 @@ struct cell_module {
 
 EthernetClient ethClient;
 
-uint8_t sendBuff[32];
+uint8_t sendBuff[10];
 
 bool xFullReadDone,xSafetyConditions;
 //timers
-unsigned long tmrStartTime,tmrServerComm,tmrScanModules,tmrRetryScan,tmrSendData,tmrReadStatistics,tmrCommTimeout,tmrDelayAfterSolarReconnect;
+unsigned long tmrStartTime,tmrServerComm,tmrScanModules,tmrRetryScan,tmrSendData,tmrReadStatistics,tmrCommTimeout;//,tmrDelayAfterSolarReconnect;
 //commands
 bool xCalibDataRequested;
 //statuses
@@ -162,7 +162,9 @@ uint8_t rxBuffer[RXQUEUESIZE][RXBUFFSIZE];//for first item if >0 command is insi
 bool rxBufferMsgReady[RXQUEUESIZE];
 uint8_t rxLen,crcH,crcL,readState,rxPtr,rxBufPtr=0;
 
-int gi;//for for loops in switch-case
+uint8_t gi;//for for loops in switch-case
+
+uint16_t SDcardFileIndex = 0;
 
 cell_module moduleList[MODULE_ADDRESS_RANGE_SIZE];
 uint8_t modulesCount=0;
