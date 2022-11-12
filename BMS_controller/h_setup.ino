@@ -51,8 +51,9 @@ void setup() {
   
   tmrStartTime = millis();
   stateMachineStatus=0;
+  nextState = 0;
   solarConnected = true;
 
-  SendEventStart();
+  SendEvent(5,0);
   Serial.println(F("\nSetup finished."));
 }

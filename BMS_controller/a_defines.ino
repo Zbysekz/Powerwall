@@ -172,7 +172,7 @@ bool xHeating;
 uint16_t iHeatingEnergyCons;
 
 //StateMachine
-uint8_t stateMachineStatus;
+uint8_t stateMachineStatus,nextState;
 unsigned long tmrDelay;
 //commands
 bool xReqRun,xReqChargeOnly,xReqDisconnect,xReqErrorReset;

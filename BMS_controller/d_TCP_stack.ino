@@ -380,9 +380,9 @@ void ExchangeCommunicationWithServer(){
     }
 }
 
-void SendEventStart(){
-  sendBuff[0] = 5;
-  sendBuff[1] = 0;
+void SendEvent(uint8_t id, uint8_t sub_id){
+  sendBuff[0] = id;
+  sendBuff[1] = sub_id;
   
   int retCon = ethClient.connect(ipServer, 23);
     if (retCon!=1) {
@@ -390,6 +390,7 @@ void SendEventStart(){
           Serial.println(retCon);
           status_eth = 30;
     } else {
+      status_eth = 1;//ok status
       int cnt_ = Send(sendBuff,2);
       if(cnt_<=0){
         Serial.println(F("Sending status failed!"));

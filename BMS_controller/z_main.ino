@@ -117,87 +117,80 @@ void PowerStateMachine(){
 
   switch (stateMachineStatus){
     case 0://IDLE - diconnected state
-      digitalWrite(PIN_MAIN_RELAY, false);      
-
       if(xSafetyConditions && xReqRun){
-        digitalWrite(PIN_MAIN_RELAY, true);
         tmrDelay=millis();
-        stateMachineStatus = 1;
+        nextState = 1;
         Serial.println(F("CONNECTING for RUN"));
+        SendEvent(5,1);
       }
       else if(xSafetyConditions && xReqChargeOnly){
         digitalWrite(PIN_MAIN_RELAY, true);
         tmrDelay=millis();
-        stateMachineStatus = 20;
+        nextState = 20;
         Serial.println(F("CONNECTING for CHARGE only"));
+        SendEvent(5,2);
       }
       
     break;
     case 1://WAIT TO CONTACTOR
       if(CheckTimer(tmrDelay, 1000L)){
         tmrDelay=millis();
-        stateMachineStatus = 10;
+        nextState = 10;
       }
     break;
     case 10://RUN - discharging, possibly also charging at same time
-      if (xReqDisconnect || !xSafetyConditions || xReqChargeOnly || oneOfCellIsLow){
-        tmrDelay=millis();
-
-        if(!xSafetyConditions){
-          Serial.println(F("EMERGENCY shutdown"));
+      
+      if(!xSafetyConditions){
           errorStatus_cause = errorStatus;//to retain information
           xEmergencyShutDown = true;
-        }else if (xReqChargeOnly)Serial.println(F("Going from RUN to charge only"));
-        else
-          Serial.println(F("Disconnect shutdown"));
-        
-        if(xSafetyConditions && (xReqChargeOnly || oneOfCellIsLow))
-          stateMachineStatus = 20;
-        else
-          stateMachineStatus = 15;
+          nextState = 99;
+          Serial.println(F("EMERGENCY shutdown"));
+          SendEvent(5,3);
       }
-    break;
-    case 15:
-      if(CheckTimer(tmrDelay, 1000L)){
-        digitalWrite(PIN_MAIN_RELAY, false);
-
-        if(xEmergencyShutDown)
-          stateMachineStatus = 99;
-        else
-          stateMachineStatus = 0;
+      else if ((xReqChargeOnly || oneOfCellIsLow)){
+        nextState = 20;
+        Serial.println(F("Going from RUN to charge only"));
+        SendEvent(5,4);
+      }else if (xReqDisconnect){
+        nextState = 0;
+        Serial.println(F("Disconnect shutdown"));
+        SendEvent(5,5);
       }
-    break;
 
     case 20://CHARGE ONLY - main relay is switched on, solar breaker is also on but contactor behind DC/AC is off
       if(!xSafetyConditions){
-        digitalWrite(PIN_MAIN_RELAY, false);
         errorStatus_cause = errorStatus;//to retain information
-        stateMachineStatus = 99;
+        nextState = 99;
       }else if (xReqDisconnect){
-        digitalWrite(PIN_MAIN_RELAY, false);
-        stateMachineStatus = 0;
+        nextState = 0;
       }else if (xReqRun){
         tmrDelay=millis();
-        stateMachineStatus = 1;
+        nextState = 1;
         Serial.println(F("GOING from CHARGE TO RUN"));
+        SendEvent(5,6);
       }
     break;
     
     case 99://ERROR
-      digitalWrite(PIN_MAIN_RELAY, false);
-      xEmergencyShutDown = false;
       if(xReqErrorReset){
-        stateMachineStatus = 0;
+        nextState = 0;
       }
     break;
     default:;
   }
+
+  //rewrite to outputs
+  digitalWrite(PIN_MAIN_RELAY, (stateMachineStatus==1 || stateMachineStatus==10 || stateMachineStatus==20));
+
+
 
   //reset all signals after one iteration
   xReqRun = false;
   xReqChargeOnly = false;
   xReqDisconnect = false;
   xReqErrorReset = false;
+
+  stateMachineStatus = nextState;
 }
 
 //Balancing is done by burning energy on cell modules, cases:
