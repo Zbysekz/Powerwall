@@ -258,24 +258,24 @@ void ScanModules() {
 }
 
 void PrintModuleInfo(struct  cell_module *module, bool withCal){
-  Serial.println("Address: ");
-  Serial.println(module->address);
-  Serial.println(" V:");
-  Serial.println(module->voltage);
-  Serial.println(" T:");
-  Serial.println(module->temperature);
+  Serial.print("\nAddress: ");
+  Serial.print(module->address);
+  Serial.print(" V:");
+  Serial.print(module->voltage);
+  Serial.print(" T:");
+  Serial.print(module->temperature);
   if(withCal){
-    Serial.println(" VC:");
-    Serial.println(module->voltageCalib);
-    Serial.println(",");
-    Serial.println(module->voltageCalib2);
-    Serial.println(" TC:");
-    Serial.println(module->temperatureCalib);
-    Serial.println(",");
-    Serial.println(module->temperatureCalib2);
+    Serial.print(" VC:");
+    Serial.print(module->voltageCalib);
+    Serial.print(",");
+    Serial.print(module->voltageCalib2);
+    Serial.print(" TC:");
+    Serial.print(module->temperatureCalib);
+    Serial.print(",");
+    Serial.print(module->temperatureCalib2);
   }
-  Serial.println(" Valid:");
-  Serial.println(module->validValues);
+  Serial.print(" Valid:");
+  Serial.print(module->validValues);
 }
 
 // END --------------------------------- Module operations ------------------------------------------ END
