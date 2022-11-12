@@ -35,14 +35,14 @@ void loop() {
       status_i2c = 1;//ok
       iFailCommCnt=0;
     }else{
-      Log(F("Error in scanning modules"));
+      Log("Error in scanning modules");
       status_i2c = 2;//error in reading
       iFailCommCnt++;
       if(iFailCommCnt==2){
         xFullReadDone = false;//do complete scan
       }
       if(iFailCommCnt>3){
-        Log(F("Comm.fail.,scan restart"));
+        Log("Comm.fail.,scan restart");
         iFailCommCnt = 0;
         modulesCount = 0;
         I2c.end(); //restart I2C hw
@@ -65,8 +65,8 @@ void loop() {
       res = res && Cell_read_burning_counter(moduleList[i].address, iBurnCnt);
 
       if(!res){
-        Serial.print(F("\nErr in reading stats:"));
-        Serial.println(moduleList[i].address);
+        Log("\nErr in reading stats:");
+        Log(moduleList[i].address);
         moduleList[i].iStatErrCnt = 0;
         moduleList[i].iBurningCnt = 0;
         
@@ -120,14 +120,14 @@ void PowerStateMachine(){
       if(xSafetyConditions && xReqRun){
         tmrDelay=millis();
         nextState = 1;
-        Log(F("CONNECTING for RUN"));
+        Log("CONNECTING for RUN");
         SendEvent(5,1);
       }
       else if(xSafetyConditions && xReqChargeOnly){
         digitalWrite(PIN_MAIN_RELAY, true);
         tmrDelay=millis();
         nextState = 20;
-        Log(F("CONNECTING for CHARGE only"));
+        Log("CONNECTING for CHARGE only");
         SendEvent(5,2);
       }
       
@@ -144,16 +144,16 @@ void PowerStateMachine(){
           errorStatus_cause = errorStatus;//to retain information
           xEmergencyShutDown = true;
           nextState = 99;
-          Log(F("EMERGENCY shutdown"));
+          Log("EMERGENCY shutdown");
           SendEvent(5,3);
       }
       else if ((xReqChargeOnly || oneOfCellIsLow)){
         nextState = 20;
-        Log(F("Going from RUN to charge only"));
+        Log("Going from RUN to charge only");
         SendEvent(5,4);
       }else if (xReqDisconnect){
         nextState = 0;
-        Log(F("Disconnect shutdown"));
+        Log("Disconnect shutdown");
         SendEvent(5,5);
       }
       break;
@@ -166,7 +166,7 @@ void PowerStateMachine(){
       }else if (xReqRun){
         tmrDelay=millis();
         nextState = 1;
-        Log(F("GOING from CHARGE TO RUN"));
+        Log("GOING from CHARGE TO RUN");
         SendEvent(5,6);
       }
     break;
@@ -222,12 +222,12 @@ void BalanceCells(){
         bool res = true;
         if(!moduleList[i].burning){
           res = Cell_set_bypass_voltage(moduleList[i].address, min + imbalanceThreshold);// burn to just match imbalance threshold
-          //Serial.print(F("\nBURNING start! module:"));
-          Serial.println(moduleList[i].address);
+          Log("\nBURNING start! module:");
+          Log(moduleList[i].address);
         }
         if(!res){
-          Serial.print(F("\nError while setting cell to burn! module:"));
-          Serial.println(moduleList[i].address);
+          Log("\nError while setting cell to burn! module:");
+          Log(moduleList[i].address);
         }
       }
     }

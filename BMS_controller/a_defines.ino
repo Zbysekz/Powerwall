@@ -5,7 +5,6 @@
 #include <avr/wdt.h>
 #include <RunningMedian.h> // bob tillard running median
 #include <SD.h>
-
 //---------------------- SYSTEM PARAMETERS ---------------------------------------------------------
 // the IP address for the shield:
 IPAddress ip(192, 168, 0, 12);
@@ -94,6 +93,11 @@ uint8_t mac[] = {0xDE, 0xAA, 0xBE, 0xEF, 0xFE, 0xED};
 
 #define VOLT_AVG_SAMPLES 6
 #define TEMP_AVG_SAMPLES 6
+
+void Log(int integer);
+void Log(const wchar_t *str);
+void Log(float str, int decimal_places);
+void Log(uint16_t integer);
 
 //---------------------- STRUCTURES -----------------------------------------------------------
 

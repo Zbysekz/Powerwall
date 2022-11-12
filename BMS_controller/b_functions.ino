@@ -72,8 +72,8 @@ bool ReadModuleQuick(struct  cell_module *module) {
   uint8_t CRCVoltTemp = 0, xBurning;
   bool res;
 
-  Serial.print(F("\nQuickRead:"));
-  Serial.println(module->address);
+  //Serial.println("\nQuickRead:");
+  //Serial.println(module->address);
   uint8_t trials = 3;
 
   while(trials>0){
@@ -85,9 +85,9 @@ bool ReadModuleQuick(struct  cell_module *module) {
     uint8_t realCRC = uint8_t(voltage&0xFF)+uint8_t((voltage&0xFF00) >> 8) + uint8_t(temperature&0xFF)+uint8_t((temperature&0xFF00) >> 8);
     
     if (res && CRCVoltTemp != realCRC){
-      Serial.print(F("\nCRC mismatch in read Mod.quick!"));
-      Serial.println(realCRC);
-      Serial.println(CRCVoltTemp);
+      Log("\nCRC mismatch in read Mod.quick!");
+      Log(realCRC);
+      Log(CRCVoltTemp);
       crcMismatchCounter ++;
 
       res = false;
@@ -98,17 +98,17 @@ bool ReadModuleQuick(struct  cell_module *module) {
   
   
   if(!res){
-    Serial.print(F("\nFailed to read Mod.quick!"));
-    Serial.println(module->address);
+    Log("\nFailed to read Mod.quick!");
+    Log(module->address);
     if(!Cell_resetI2c(module->address)){//reset module I2c command
-      Serial.print(F("\nFailed to reset I2C of module:"));
-      Serial.println(module->address);
+      Log("\nFailed to reset I2C of module:");
+      Log(module->address);
     }
     
     if(++(module->readErrCnt)>=3)
       module->validValues = false;//comm failure must happen 3x times to consider values as invalid
     return false;
-  }SendEvent(5,0);
+  }
   
   //limit values to prevent affecting average too much - in case of one fail value
   voltage = min(500,voltage);
@@ -156,12 +156,12 @@ bool ReadModuleQuick(struct  cell_module *module) {
     module->readErrCnt = 0;
     return true;
   /*} else {
-    Serial.println(F("Resetting module I2C !!!!"));
-    if(!Cell_resetI2c(module->address)){//reset module I2c command
-      Serial.print(F("\nFailed to reset I2C of module:"));
-      Serial.println(module->address);
+    Log("Resetting module I2C !!!!");
+    i!Cell_resetI2c(module->address)){//reset module I2c command
+      Log("\nFailed to reset I2C of module:");
+      Log(module->address);
     }
-    if(++module->readErrCnt>=3)
+    i++module->readErrCnt>=3)
       module->validValues = false;//comm failure must happen 3x times to consider values as invalid
     return false;
   }*/
@@ -179,8 +179,8 @@ bool ReadModule(struct  cell_module *module) {
   if(res)
     res = res && Cell_read_temperature_calibration(module->address, tempCalib, tempCalib2);
   if(!res){
-    Serial.print(F("\nFailed to read Module!"));
-    Serial.println(module->address);
+    Log("\nFailed to read Module!");
+    Log(module->address);
     return false;
   }
   module->voltageCalib = voltCalib;
@@ -192,8 +192,8 @@ bool ReadModule(struct  cell_module *module) {
 
 bool ReadModules(bool quick) {
   bool res = true;
-  Serial.print(F("Reading all modules"));
-  Serial.println(quick?F(" quickly"):F(" fully"));
+  Serial.println("Reading all modules");
+  Serial.println(quick?" quickly":" fully");
   for(uint8_t i=0;i<modulesCount;i++){
     if(moduleList[i].address!=0){
       if(quick){
@@ -216,17 +216,17 @@ bool PingModule(uint8_t address) {
 
 uint8_t Provision() {//finding cell modules with default addresses
 
-  Serial.println(F("Provisioning started"));
+  Log("Provisioning started");
   if (PingModule(DEFAULT_SLAVE_ADDR))
   {
-    Serial.println(F("Module with default address exists"));
+    Log("Module with default address exists");
     for (uint8_t address = MODULE_ADDRESS_RANGE_START; address <= MODULE_ADDRESS_RANGE_END; address++ )
     {
       if (PingModule(address) == false) {
         //We have found a gap
         Cell_set_slave_address(DEFAULT_SLAVE_ADDR, (uint8_t)address);
-        Serial.print(F("Successfuly assigned address:"));
-        Serial.println(address);
+        Log("Successfuly assigned address:");
+        Log(address);
         return address;
       }
     }
@@ -238,13 +238,13 @@ uint8_t Provision() {//finding cell modules with default addresses
 
 
 void ScanModules() {
-  Serial.println(F("Scanning for modules"));
+  Log("Scanning for modules");
   modulesCount=0;
   for (uint8_t address = MODULE_ADDRESS_RANGE_START; address <= MODULE_ADDRESS_RANGE_END; address++ )
   {
     if (PingModule(address) == true) {
-      Serial.print(F("Module discovered! Address:"));    
-      Serial.println(address);
+      Log("Module discovered! Address:");    
+      Log(address);
       
       moduleList[modulesCount].address = address;
       moduleList[modulesCount].validValues = false;
@@ -254,34 +254,48 @@ void ScanModules() {
       modulesCount++;
     }
   }
-  Serial.println("End scanning.");
+  Log("End scanning.");
 }
 
 void PrintModuleInfo(struct  cell_module *module, bool withCal){
- /* Serial.print(F("Address: "));
-  Serial.print(module->address);
-  Serial.print(F(" V:"));
-  Serial.print(module->voltage);
-  Serial.print(F(" T:"));
-  Serial.print(module->temperature);
+  Serial.println("Address: ");
+  Serial.println(module->address);
+  Serial.println(" V:");
+  Serial.println(module->voltage);
+  Serial.println(" T:");
+  Serial.println(module->temperature);
   if(withCal){
-    Serial.print(F(" VC:"));
-    Serial.print(module->voltageCalib,3);
-    Serial.print(F(","));
-    Serial.print(module->voltageCalib2,3);
-    Serial.print(F(" TC:"));
-    Serial.print(module->temperatureCalib,3);
-    Serial.print(F(","));
-    Serial.print(module->temperatureCalib2,3);
+    Serial.println(" VC:");
+    Serial.println(module->voltageCalib);
+    Serial.println(",");
+    Serial.println(module->voltageCalib2);
+    Serial.println(" TC:");
+    Serial.println(module->temperatureCalib);
+    Serial.println(",");
+    Serial.println(module->temperatureCalib2);
   }
-  Serial.print(F(" Valid:"));
-  Serial.print(module->validValues);
-  Serial.println();*/
+  Serial.println(" Valid:");
+  Serial.println(module->validValues);
 }
 
 // END --------------------------------- Module operations ------------------------------------------ END
+void Log(float f){
+  char str[16];  
+  sprintf(str, "%.2f", (double)f);
+  Log(str);
+}
+void Log(uint16_t integer){
+  Log((int)integer);// print to the serial port too:// print to the serial// print to the serial port too:
+}
+void Log(int integer){
+  char str[16];
+  sprintf(str, "%d", integer);
+  Log(str);
+}
 
-void Log(const __FlashStringHelper *str){
+void Log(const char *str){
+  // print to the serial port too:
+  Serial.println(str);
 // open the file. note that only one file can be open at a time,
   // so you have to close this one before opening another.
   String filename = String(SDcardFileIndex);
@@ -296,6 +310,4 @@ void Log(const __FlashStringHelper *str){
   else {
     Serial.println("error opening log file");
   }
-  // print to the serial port too:
-  Serial.println(str);
 }

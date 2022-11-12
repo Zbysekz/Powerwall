@@ -45,7 +45,7 @@ void setup() {
 Serial.print(F("Initializing SD card..."));
 
 // see if the card is present and can be initialized:
-if (!SD.begin()) {
+if (!SD.begin(4)) {
   Serial.println(F("Card failed, or not present"));
   // don't do anything more:
   while (1); //WDT will reset Arduino
@@ -56,6 +56,8 @@ while(true){
   if (!SD.exists(str+".log")) break;
   SDcardFileIndex++;
 }
+Serial.println("found index.");
+Serial.println(SDcardFileIndex);
   
   I2c.begin();// SDA=PC4, SCL=PC5
   I2c.setSpeed(false);//100kHz
@@ -67,7 +69,6 @@ while(true){
   stateMachineStatus=0;
   nextState = 0;
   solarConnected = true;
-
   SendEvent(5,0);
-  Log(F("\nSetup finished."));
+  Log("\nSetup finished.");
 }
