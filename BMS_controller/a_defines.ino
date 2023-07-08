@@ -27,8 +27,8 @@ uint8_t mac[] = {0xDE, 0xAA, 0xBE, 0xEF, 0xFE, 0xED};
 //absolute voltage limits
 #define LIMIT_VOLT_LOW2 310 //x10mV - absolute limit, goes to error if below
 #define LIMIT_VOLT_LOW 325 //x10mV - limit for auto transition from run to charge
-#define LIMIT_VOLT_HIGH 408 //x10mV
-#define LIMIT_VOLT_HIGH2 412 //x10mV
+#define LIMIT_VOLT_HIGH 409 //x10mV
+#define LIMIT_VOLT_HIGH2 414 //x10mV
 
 //balancing thresholds
 #define IMBALANCE_THRESHOLD 10//x10mV
