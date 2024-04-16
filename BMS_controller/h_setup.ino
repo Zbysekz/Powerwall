@@ -15,14 +15,16 @@ void setup() {
 
   //inputs/outputs
   pinMode(PIN_MAIN_RELAY, OUTPUT);
-  pinMode(PIN_SOLAR_CONTACTOR, OUTPUT);
+  /*pinMode(PIN_SOLAR_CONTACTOR, OUTPUT);
   pinMode(PIN_OUTPUT_DCAC_BREAKER, OUTPUT);
-  pinMode(PIN_VENTILATOR, OUTPUT);
+  pinMode(PIN_VENTILATOR, OUTPUT);*/
+  pinMode(PIN_GARAGE, OUTPUT);
 
   digitalWrite(PIN_MAIN_RELAY, false);
-  digitalWrite(PIN_SOLAR_CONTACTOR, false);
+  /*digitalWrite(PIN_SOLAR_CONTACTOR, false);
   digitalWrite(PIN_OUTPUT_DCAC_BREAKER, false);
-  digitalWrite(PIN_VENTILATOR, false);
+  digitalWrite(PIN_VENTILATOR, false);*/
+  digitalWrite(PIN_GARAGE, false);
 
   ////////////////////////////////////////////////////////////////////////////////////////////
   
@@ -42,7 +44,7 @@ void setup() {
     status_eth=20;
   }
 
-Serial.print(F("Initializing SD card..."));
+/*Serial.print(F("Initializing SD card..."));
 
 // see if the card is present and can be initialized:
 if (!SD.begin(4)) {
@@ -58,7 +60,7 @@ while(true){
 }
 Serial.println("found index.");
 Serial.println(SDcardFileIndex);
-  
+  */
   I2c.begin();// SDA=PC4, SCL=PC5
   I2c.setSpeed(false);//100kHz
   I2c.pullup(false);// no pullups, we have external

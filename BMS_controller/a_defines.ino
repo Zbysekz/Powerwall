@@ -4,7 +4,7 @@
 #include <I2C.h>//library from https://github.com/rambo/I2C
 #include <avr/wdt.h>
 #include <RunningMedian.h> // bob tillard running median
-#include <SD.h>
+//#include <SD.h>
 //---------------------- SYSTEM PARAMETERS ---------------------------------------------------------
 // the IP address for the shield:
 IPAddress ip(192, 168, 0, 12);
@@ -54,9 +54,10 @@ uint8_t mac[] = {0xDE, 0xAA, 0xBE, 0xEF, 0xFE, 0xED};
 // pinout rozvadec
 // cerna GND; fialova 13; pruhledna 12; modra 11; oranzova 10; bila 9; zelena 8; cervena 7; zluta 6
 #define PIN_MAIN_RELAY 8
-#define PIN_SOLAR_CONTACTOR 10
-#define PIN_OUTPUT_DCAC_BREAKER 11
-#define PIN_VENTILATOR 10 
+//#define PIN_SOLAR_CONTACTOR 13
+//#define PIN_OUTPUT_DCAC_BREAKER 11
+//#define PIN_VENTILATOR 12
+#define PIN_GARAGE 13
 
 //---------------------- COMMAND DEFINES -----------------------------------------------------------
 
@@ -145,8 +146,8 @@ struct cell_module {
 //---------------------- VARIABLES -----------------------------------------------------------
 
 EthernetClient ethClient;
-
-uint8_t sendBuff[10];
+bool garage_contactor;
+uint8_t sendBuff[100];
 
 bool xFullReadDone,xSafetyConditions;
 //timers
@@ -180,6 +181,7 @@ uint16_t iHeatingEnergyCons;
 //StateMachine
 uint8_t stateMachineStatus,nextState;
 unsigned long tmrDelay;
+
 //commands
 bool xReqRun,xReqChargeOnly,xReqDisconnect,xReqErrorReset;
 bool xEmergencyShutDown;

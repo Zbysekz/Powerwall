@@ -148,6 +148,12 @@ void ProcessReceivedData(uint8_t data[]) {
         Log("MANUALLY BURNING!");
       }
       break;
+    case 20:
+      if (len == 2){
+        garage_contactor = data[2];
+        Log("CMD GARAGE");
+      }
+    break;
     case 199:  //ending packet
       xServerEndPacket = true;
       break;

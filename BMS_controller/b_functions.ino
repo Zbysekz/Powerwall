@@ -298,7 +298,7 @@ void Log(const char *str){
   Serial.println(str);
 // open the file. note that only one file can be open at a time,
   // so you have to close this one before opening another.
-  String filename = String(SDcardFileIndex);
+  /*String filename = String(SDcardFileIndex);
   File dataFile = SD.open(filename+".log", FILE_WRITE);
 
   // if the file is available, write to it:
@@ -309,5 +309,5 @@ void Log(const char *str){
   // if the file isn't open, pop up an error:
   else {
     Serial.println("error opening log file");
-  }
+  }*/
 }
