@@ -2,3 +2,6 @@
 espController/wifiCredentials.h
 *.hex
 *.bin
+*.elf
+*.map
+ESP_bridge/credentials/*

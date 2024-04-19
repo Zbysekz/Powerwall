@@ -261,7 +261,7 @@ uint16_t CRC16(uint8_t* bytes, uint8_t _len) {
   return crc;
 }
 
-void ExchangeCommunicationWithServer() {
+bool ExchangeCommunicationWithServer() {
   Log("Connecting to server...");
   int cnt = 0;  //aux var
   int retCon = ethClient.connect(ipServer, 23);
@@ -269,7 +269,8 @@ void ExchangeCommunicationWithServer() {
     Log("Connection to server failed! error code:");
     Log(retCon);
     status_eth = 30;
-  } else {
+    return false;
+  } 
     status_eth = 1;  //ok status
 
     if (xCalibDataRequested) {  // calibration data
@@ -377,8 +378,6 @@ void ExchangeCommunicationWithServer() {
     }
 
     ethClient.stop();
-  }
-  Log("Leaving method ExchangeCommunicationWithServer().");
 }
 
 void SendEvent(uint8_t id, uint8_t sub_id) {
