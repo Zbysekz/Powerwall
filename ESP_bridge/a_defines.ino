@@ -14,7 +14,7 @@ IPAddress ipServer(192, 168, 0, 3);
 WiFiClient wifiClient;
 
 #define BUFFER_SIZE 50
-#define QUEUE_SIZE 10
+#define QUEUE_SIZE 20
 
 
 long unsigned int tmrSendDataToServer, tmrCheckForData, tmrTimeoutReceive;

@@ -319,13 +319,14 @@ bool CommWithServer() {
       crcMismatchCounter = 0;
     }
 
-    for (uint8_t i = 0; i < modulesCount; i++) {
-      sendBuff[0] = uint8_t(71 + i);
-      sendBuff[1] = uint8_t((moduleList[i].address - MODULE_ADDRESS_RANGE_START + 1) & 0xFF);
-      sendBuff[2] = uint8_t(((moduleList[i].iStatErrCnt) & 0xFF00) >> 8);
-      sendBuff[3] = uint8_t((moduleList[i].iStatErrCnt) & 0xFF);
-      sendBuff[4] = uint8_t(((moduleList[i].iBurningCnt) & 0xFF00) >> 8);
-      sendBuff[5] = uint8_t((moduleList[i].iBurningCnt) & 0xFF);
+    
+    for (uint8_t i = 0; i < modulesCount/2; i++) {
+      sendBuff[0] = uint8_t(71 + i+offset_portion2);
+      sendBuff[1] = uint8_t((moduleList[i+offset_portion2].address - MODULE_ADDRESS_RANGE_START + 1) & 0xFF);
+      sendBuff[2] = uint8_t(((moduleList[i+offset_portion2].iStatErrCnt) & 0xFF00) >> 8);
+      sendBuff[3] = uint8_t((moduleList[i+offset_portion2].iStatErrCnt) & 0xFF);
+      sendBuff[4] = uint8_t(((moduleList[i+offset_portion2].iBurningCnt) & 0xFF00) >> 8);
+      sendBuff[5] = uint8_t((moduleList[i+offset_portion2].iBurningCnt) & 0xFF);
 
       cnt = Send(sendBuff, 6);
       if (cnt <= 0) {
@@ -333,6 +334,12 @@ bool CommWithServer() {
         xFail = true;
         break;  //do not continue if one of them failed
       }
+      delay(50);
+    }
+    if(offset_portion2>0){
+      offset_portion2=0;
+    }else{
+      offset_portion2=modulesCount/2;
     }
     if (!xFail){
       xReadyToSendStatistics = false;
@@ -342,23 +349,29 @@ bool CommWithServer() {
 
   } else {  // normal data
     SendStatus();
-    if (CheckTimer(tmrSendData, 60000L)) {
-      for (uint8_t i = 0; i < modulesCount; i++) {
-        if (moduleList[i].validValues) {
+    if (CheckTimer(tmrSendData, 30000L)) {
+      for (uint8_t i = 0; i < modulesCount/2; i++) {
+        if (moduleList[i+offset_portion].validValues) {
 
-          sendBuff[0] = uint8_t(11 + i);
-          sendBuff[1] = uint8_t((moduleList[i].address - MODULE_ADDRESS_RANGE_START + 1) & 0xFF);
-          sendBuff[2] = uint8_t(((moduleList[i].voltage_avg) & 0xFF00) >> 8);
-          sendBuff[3] = uint8_t((moduleList[i].voltage_avg) & 0xFF);
-          sendBuff[4] = uint8_t(((moduleList[i].temperature_avg) & 0xFF00) >> 8);
-          sendBuff[5] = uint8_t((moduleList[i].temperature_avg) & 0xFF);
+          sendBuff[0] = uint8_t(11 + i + offset_portion);
+          sendBuff[1] = uint8_t((moduleList[i+offset_portion].address - MODULE_ADDRESS_RANGE_START + 1) & 0xFF);
+          sendBuff[2] = uint8_t(((moduleList[i+offset_portion].voltage_avg) & 0xFF00) >> 8);
+          sendBuff[3] = uint8_t((moduleList[i+offset_portion].voltage_avg) & 0xFF);
+          sendBuff[4] = uint8_t(((moduleList[i+offset_portion].temperature_avg) & 0xFF00) >> 8);
+          sendBuff[5] = uint8_t((moduleList[i+offset_portion].temperature_avg) & 0xFF);
 
           cnt = Send(sendBuff, 6);
           if (cnt <= 0) {
             Log("Sending data failed!");
             return false;
           }
+          delay(50);
         }
+      }
+      if(offset_portion>0){
+        offset_portion=0;
+      }else{
+        offset_portion=modulesCount/2;
       }
     }
   }

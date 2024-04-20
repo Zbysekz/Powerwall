@@ -12,7 +12,7 @@ void loop() {
     while(bridgeSerial.available() > 0){
       Serial.print(".");
       uint8_t x = bridgeSerial.read();
-      //Serial.println(x);
+      Serial.println(x);
       Receive(x);
     }
 

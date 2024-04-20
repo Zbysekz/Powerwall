@@ -4,7 +4,7 @@ void setup() {
    
   Serial.begin(19200);
   Serial.setTimeout(2000);
-  bridgeSerial.begin(9600);
+  bridgeSerial.begin(19200);
 
   Serial.print(F("Program start"));
   status_i2c = 1;
@@ -29,6 +29,8 @@ void setup() {
   tmrStartTime = millis();
   stateMachineStatus=0;
   nextState = 0;
+  offset_portion = 0;
+  offset_portion2 = 0;
   solarConnected = true;
   SendEvent(5,0);
   Log("\nSetup finished.");

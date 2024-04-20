@@ -149,7 +149,7 @@ uint8_t errorCnt_dataCorrupt, errorCnt_CRCmismatch, errorCnt_BufferFull;
 bool voltagesOk,validValues,temperaturesOk;
 uint8_t errorStatus,errorStatus_cause;
 bool xServerEndPacket,oneOfCellIsLow, oneOfCellIsHigh, solarConnected;
-uint8_t iFailCommCnt;
+uint8_t iFailCommCnt,offset_portion,offset_portion2;
 
 int errorWhichModule;
 uint8_t rxBuffer[RXQUEUESIZE][RXBUFFSIZE];//for first item if >0 command is inside, 0 after it is proccessed

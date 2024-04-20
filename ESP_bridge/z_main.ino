@@ -43,7 +43,7 @@ void loop(){
         }
       break;
       case 2:
-        expected_len = rx+5; //two start flags + crc two bytes + end flag
+        expected_len = rx+6; //two start flags + crc two bytes + end flag
         receive_state++;
         ResetTimer(tmrTimeoutReceive);
         break;
