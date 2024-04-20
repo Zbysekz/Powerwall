@@ -48,6 +48,8 @@ void ServerSetup(){
     strcat(result,("<p>serial invalid3 packets: " + String(serial_invalid_packets3) + "</p>").c_str());
     strcat(result,("<p>tcp ok packets(sessions) received: " + String(tcp_ok_packets) + "</p>").c_str());
     strcat(result,("<p>tcp connection fails: " + String(tcp_conn_failed) + "</p>").c_str());
+    strcat(result,("<p>queue full packets: " + String(queue_full_packets) + "</p>").c_str());
+    
 
     strcat(result,("<p>Free heap: " + String(ESP.getFreeHeap()) +" B</p>").c_str());
 

@@ -21,20 +21,23 @@ void ConnectToWifi(){
     }
     Serial.println(F("Connected!"));   
 }
-void CommWithServer(bool dataForServerReady){
+void CommWithServer(){
 //vytvorime spojeni, posleme data a precteme jestli nejaka neprisla, pak zavreme spojeni
     if (!wifiClient.connect(ipServer, 3666)) {
           Serial.println("Connection to server failed! IP:"+ipServer.toString());
           tcp_conn_failed++;
         } else {
 
-          if(dataForServerReady){
-            if(buffer_ptr > 6){
-              int cnt = SendToServer(read_buffer+3,buffer_ptr-6);
+          while(queue_ptr_actual!=queue_ptr_ready){
+            
+              int cnt = SendToServer(tx_queue[queue_ptr_actual],tx_queue_sizes[queue_ptr_actual]);
+              if(++queue_ptr_actual>=QUEUE_SIZE){
+                queue_ptr_actual=0;
+              }
+              ResetTimer(tmrSendDataToServer);
               if(cnt<=0){
                 Serial.println("Write failed!");
               }
-            }
           }
           ResetTimer(tmrCheckForData);
           bool payload_received = false;

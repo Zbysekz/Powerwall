@@ -7,8 +7,6 @@ void setup() {
   bridgeSerial.begin(9600);
 
   Serial.print(F("Program start"));
-
-  status_eth = 1;//ok statuses
   status_i2c = 1;
 
   //inputs/outputs

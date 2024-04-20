@@ -144,7 +144,7 @@ unsigned long tmrBalance;
 //commands
 bool xCalibDataRequested;
 //statuses
-uint8_t status_i2c, status_eth;
+uint8_t status_i2c;
 uint8_t errorCnt_dataCorrupt, errorCnt_CRCmismatch, errorCnt_BufferFull;
 bool voltagesOk,validValues,temperaturesOk;
 uint8_t errorStatus,errorStatus_cause;
@@ -157,8 +157,6 @@ bool rxBufferMsgReady[RXQUEUESIZE];
 uint8_t rxLen,crcH,crcL,readState,rxPtr,rxBufPtr=0;
 
 uint8_t gi;//for for loops in switch-case
-
-uint16_t SDcardFileIndex = 0;
 
 cell_module moduleList[MODULE_ADDRESS_RANGE_SIZE];
 uint8_t modulesCount=0;

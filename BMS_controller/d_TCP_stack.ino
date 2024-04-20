@@ -320,8 +320,6 @@ bool CommWithServer() {
     }
 
     for (uint8_t i = 0; i < modulesCount; i++) {
-      float ff[1024];
-      ff[0] = ff[22] + 3 + 3;
       sendBuff[0] = uint8_t(71 + i);
       sendBuff[1] = uint8_t((moduleList[i].address - MODULE_ADDRESS_RANGE_START + 1) & 0xFF);
       sendBuff[2] = uint8_t(((moduleList[i].iStatErrCnt) & 0xFF00) >> 8);

@@ -1,8 +1,8 @@
 
 
 void ICACHE_FLASH_ATTR setup(){
-
-  Serial.begin(19200);
+  wdt_enable(WDTO_8S);
+  Serial.begin(9600);
   bridgeSerial.begin(9600);
 
   Serial.println(F("Program start"));
@@ -33,5 +33,7 @@ void ICACHE_FLASH_ATTR setup(){
 
   buffer_ptr = 0;
   receive_state = 0;
+  queue_ptr_actual = 0;
+  queue_ptr_ready = 0;
 
 }
