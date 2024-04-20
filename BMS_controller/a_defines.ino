@@ -180,8 +180,7 @@ bool xReadyToSendStatistics;
 uint16_t crcMismatchCounter;
 
 RunningMedian temperature_median = RunningMedian(5);
-
-SoftwareSerial bridgeSerial(2, 3); // RX, TX
+auto bridgeSerial = Serial1;
 
 union {
   float val;
