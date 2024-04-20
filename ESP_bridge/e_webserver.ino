@@ -42,10 +42,13 @@ void ServerSetup(){
 
     
         
-    strcat(result,("<p>ok packets: " + String(ok_packets) + "</p>").c_str());
-    strcat(result,("<p>invalid1 packets: " + String(invalid_packets1) + "</p>").c_str());
-    strcat(result,("<p>invalid2 packets: " + String(invalid_packets2) + "</p>").c_str());
-    strcat(result,("<p>invalid3 packets: " + String(invalid_packets3) + "</p>").c_str());
+    strcat(result,("<p>serial ok packets: " + String(serial_ok_packets) + "</p>").c_str());
+    strcat(result,("<p>serial invalid1 packets: " + String(serial_invalid_packets1) + "</p>").c_str());
+    strcat(result,("<p>serial invalid2 packets: " + String(serial_invalid_packets2) + "</p>").c_str());
+    strcat(result,("<p>serial invalid3 packets: " + String(serial_invalid_packets3) + "</p>").c_str());
+    strcat(result,("<p>tcp ok packets(sessions) received: " + String(tcp_ok_packets) + "</p>").c_str());
+    strcat(result,("<p>tcp connection fails: " + String(tcp_conn_failed) + "</p>").c_str());
+
     strcat(result,("<p>Free heap: " + String(ESP.getFreeHeap()) +" B</p>").c_str());
 
     long millisecs = millis();

@@ -28,7 +28,7 @@ void loop(){
         else{
           receive_state=0;
           buffer_ptr = 0;
-          invalid_packets1 ++;
+          serial_invalid_packets1 ++;
         }
       break;
       case 1:
@@ -37,7 +37,7 @@ void loop(){
       }else{
           receive_state=0;
           buffer_ptr = 0;
-          invalid_packets1 ++;
+          serial_invalid_packets1 ++;
         }
       break;
       case 2:
@@ -53,19 +53,19 @@ void loop(){
               ResetTimer(tmrSendDataToServer);
               receive_state=0;
               buffer_ptr = 0;
-              ok_packets ++;
+              serial_ok_packets ++;
           }else{
             receive_state=0;
             buffer_ptr = 0;
-            invalid_packets1 ++;
+            serial_invalid_packets1 ++;
           }
         } else if (buffer_ptr-1 > expected_len){ // TODO add timeout, when nothing received for certain time
             receive_state=0;
             buffer_ptr = 0;   
-            invalid_packets2++;       
+            serial_invalid_packets2++;       
         }else{
           if (CheckTimer(tmrTimeoutReceive, 100UL)){
-            invalid_packets3++;  
+            serial_invalid_packets3++;  
           }
         }
       

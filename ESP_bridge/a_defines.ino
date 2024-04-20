@@ -5,7 +5,7 @@ AsyncWebServer server(80);
 bool connectedToWifi = false;
 
 // the IP address for the shield:
-IPAddress ip(192, 168, 0, 38);
+IPAddress ip(192, 168, 0, 12);
 
 IPAddress gateway(192, 168, 0, 1);
 IPAddress subnet(255, 255, 255, 0);
@@ -21,4 +21,5 @@ bool minutes_latch;
 SoftwareSerial bridgeSerial(D2, D3); // RX, TX
 
 // comm statistics
-uint32_t ok_packets, invalid_packets1, invalid_packets2, invalid_packets3;
+uint32_t serial_ok_packets, serial_invalid_packets1, serial_invalid_packets2, serial_invalid_packets3;
+uint32_t tcp_ok_packets, tcp_conn_failed;

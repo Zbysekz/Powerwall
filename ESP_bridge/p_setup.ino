@@ -18,7 +18,7 @@ void ICACHE_FLASH_ATTR setup(){
   Serial.println("HTTP server started");
 
   
-  ArduinoOTA.setHostname("ESP_bridge cellarControl");
+  ArduinoOTA.setHostname("ESP_bridge powerwall");
   ArduinoOTA.begin();
 
 
