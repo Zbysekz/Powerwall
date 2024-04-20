@@ -1,17 +1,8 @@
-
-#include <Ethernet.h>//for ethernet shield
+#include <SoftwareSerial.h>
 #include <SPI.h>
 #include <I2C.h>//library from https://github.com/rambo/I2C
 #include <avr/wdt.h>
 #include <RunningMedian.h> // bob tillard running median
-//#include <SD.h>
-//---------------------- SYSTEM PARAMETERS ---------------------------------------------------------
-// the IP address for the shield:
-IPAddress ip(192, 168, 0, 12);
-IPAddress ipServer(192, 168, 0, 3); 
-IPAddress dns(192, 168, 0, 4);
-IPAddress gateway(192, 168, 0, 4);
-IPAddress subnet(255, 255, 255, 0);
 
 //never change 0xDE part
 uint8_t mac[] = {0xDE, 0xAA, 0xBE, 0xEF, 0xFE, 0xED};
@@ -142,16 +133,14 @@ struct cell_module {
 #define ERROR_VOLTAGE_RANGES 0x08
 #define ERROR_TEMP_RANGES 0x10
 
-
 //---------------------- VARIABLES -----------------------------------------------------------
-
-EthernetClient ethClient;
 bool garage_contactor;
 uint8_t sendBuff[100];
 
 bool xFullReadDone,xSafetyConditions;
 //timers
 unsigned long tmrStartTime,tmrServerComm,tmrScanModules,tmrRetryScan,tmrSendData,tmrReadStatistics,tmrCommTimeout;//,tmrDelayAfterSolarReconnect;
+unsigned long tmrBalance;
 //commands
 bool xCalibDataRequested;
 //statuses
@@ -191,6 +180,8 @@ bool xReadyToSendStatistics;
 uint16_t crcMismatchCounter;
 
 RunningMedian temperature_median = RunningMedian(5);
+
+SoftwareSerial bridgeSerial(2, 3); // RX, TX
 
 union {
   float val;

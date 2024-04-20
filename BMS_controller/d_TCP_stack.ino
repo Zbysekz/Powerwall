@@ -15,7 +15,7 @@ int Send(uint8_t d[], uint8_t d_len) {
   data[4 + d_len] = crc % 256;
   data[5 + d_len] = 222;  //end byte
 
-  return ethClient.write(data, 6 + d_len);
+  return bridgeSerial.write(data, 6 + d_len);
 }
 void ProcessReceivedData(uint8_t data[]) {
   int res = 0;  //aux temp
@@ -261,145 +261,125 @@ uint16_t CRC16(uint8_t* bytes, uint8_t _len) {
   return crc;
 }
 
-bool ExchangeCommunicationWithServer() {
+bool CommWithServer() {
   Log("Connecting to server...");
   int cnt = 0;  //aux var
-  int retCon = ethClient.connect(ipServer, 23);
-  if (retCon != 1) {
-    Log("Connection to server failed! error code:");
-    Log(retCon);
-    status_eth = 30;
-    return false;
-  } 
-    status_eth = 1;  //ok status
+  
+  if (xCalibDataRequested) {  // calibration data
+    Log("Sending calibration");
+    for (uint8_t i = 0; i < modulesCount; i++) {
+      PrintModuleInfo(&moduleList[i], true);
 
-    if (xCalibDataRequested) {  // calibration data
-      Log("Sending calibration");
-      for (uint8_t i = 0; i < modulesCount; i++) {
-        PrintModuleInfo(&moduleList[i], true);
+      float_to_bytes.val = moduleList[i].voltageCalib;
 
-        float_to_bytes.val = moduleList[i].voltageCalib;
+      byte a = float_to_bytes.buffer[0];
+      byte b = float_to_bytes.buffer[1];
+      byte c = float_to_bytes.buffer[2];
+      byte d = float_to_bytes.buffer[3];
 
-        byte a = float_to_bytes.buffer[0];
-        byte b = float_to_bytes.buffer[1];
-        byte c = float_to_bytes.buffer[2];
-        byte d = float_to_bytes.buffer[3];
+      float_to_bytes.val = moduleList[i].temperatureCalib;
 
-        float_to_bytes.val = moduleList[i].temperatureCalib;
+      byte e = float_to_bytes.buffer[0];
+      byte f = float_to_bytes.buffer[1];
+      byte g = float_to_bytes.buffer[2];
+      byte h = float_to_bytes.buffer[3];
 
-        byte e = float_to_bytes.buffer[0];
-        byte f = float_to_bytes.buffer[1];
-        byte g = float_to_bytes.buffer[2];
-        byte h = float_to_bytes.buffer[3];
+      sendBuff[0] = uint8_t(41 + i);
+      sendBuff[1] = uint8_t((moduleList[i].address - MODULE_ADDRESS_RANGE_START + 1) & 0xFF);
+      sendBuff[2] = a;
+      sendBuff[3] = b;
+      sendBuff[4] = c;
+      sendBuff[5] = d;
+      sendBuff[6] = e;
+      sendBuff[7] = f;
+      sendBuff[8] = g;
+      sendBuff[9] = h;
 
-        sendBuff[0] = uint8_t(41 + i);
-        sendBuff[1] = uint8_t((moduleList[i].address - MODULE_ADDRESS_RANGE_START + 1) & 0xFF);
-        sendBuff[2] = a;
-        sendBuff[3] = b;
-        sendBuff[4] = c;
-        sendBuff[5] = d;
-        sendBuff[6] = e;
-        sendBuff[7] = f;
-        sendBuff[8] = g;
-        sendBuff[9] = h;
-
-        cnt = Send(sendBuff, 10);
-        if (cnt <= 0) {
-          Log("Sending calibration failed!");
-        }
+      cnt = Send(sendBuff, 10);
+      if (cnt <= 0) {
+        Log("Sending calibration failed!");
+        return false;
       }
-    } else if (xReadyToSendStatistics) {
-      bool xFail = false;
+    }
+  } else if (xReadyToSendStatistics) {
+    bool xFail = false;
 
-      sendBuff[0] = 69;
-      sendBuff[1] = uint8_t(iHeatingEnergyCons & 0xFF);
-      sendBuff[2] = uint8_t((iHeatingEnergyCons & 0xFF00) >> 8);
-      sendBuff[3] = uint8_t(crcMismatchCounter);
+    sendBuff[0] = 69;
+    sendBuff[1] = uint8_t(iHeatingEnergyCons & 0xFF);
+    sendBuff[2] = uint8_t((iHeatingEnergyCons & 0xFF00) >> 8);
+    sendBuff[3] = uint8_t(crcMismatchCounter);
 
-      cnt = Send(sendBuff, 4);
+    cnt = Send(sendBuff, 4);
+    if (cnt <= 0) {
+      Log("Sending statistics failed!");
+      xFail = true;
+      return false;
+    } else {
+      iHeatingEnergyCons = 0;
+      crcMismatchCounter = 0;
+    }
+
+    for (uint8_t i = 0; i < modulesCount; i++) {
+      float ff[1024];
+      ff[0] = ff[22] + 3 + 3;
+      sendBuff[0] = uint8_t(71 + i);
+      sendBuff[1] = uint8_t((moduleList[i].address - MODULE_ADDRESS_RANGE_START + 1) & 0xFF);
+      sendBuff[2] = uint8_t(((moduleList[i].iStatErrCnt) & 0xFF00) >> 8);
+      sendBuff[3] = uint8_t((moduleList[i].iStatErrCnt) & 0xFF);
+      sendBuff[4] = uint8_t(((moduleList[i].iBurningCnt) & 0xFF00) >> 8);
+      sendBuff[5] = uint8_t((moduleList[i].iBurningCnt) & 0xFF);
+
+      cnt = Send(sendBuff, 6);
       if (cnt <= 0) {
         Log("Sending statistics failed!");
         xFail = true;
-      } else {
-        iHeatingEnergyCons = 0;
-        crcMismatchCounter = 0;
+        break;  //do not continue if one of them failed
       }
+    }
+    if (!xFail){
+      xReadyToSendStatistics = false;
+    }else{
+      return false;
+    }
 
+  } else {  // normal data
+    SendStatus();
+    if (CheckTimer(tmrSendData, 60000L)) {
       for (uint8_t i = 0; i < modulesCount; i++) {
-        float ff[1024];
-        ff[0] = ff[22] + 3 + 3;
-        sendBuff[0] = uint8_t(71 + i);
-        sendBuff[1] = uint8_t((moduleList[i].address - MODULE_ADDRESS_RANGE_START + 1) & 0xFF);
-        sendBuff[2] = uint8_t(((moduleList[i].iStatErrCnt) & 0xFF00) >> 8);
-        sendBuff[3] = uint8_t((moduleList[i].iStatErrCnt) & 0xFF);
-        sendBuff[4] = uint8_t(((moduleList[i].iBurningCnt) & 0xFF00) >> 8);
-        sendBuff[5] = uint8_t((moduleList[i].iBurningCnt) & 0xFF);
+        if (moduleList[i].validValues) {
 
-        cnt = Send(sendBuff, 6);
-        if (cnt <= 0) {
-          Log("Sending statistics failed!");
-          xFail = true;
-          break;  //do not continue if one of them failed
-        }
-      }
-      if (!xFail)
-        xReadyToSendStatistics = false;
+          sendBuff[0] = uint8_t(11 + i);
+          sendBuff[1] = uint8_t((moduleList[i].address - MODULE_ADDRESS_RANGE_START + 1) & 0xFF);
+          sendBuff[2] = uint8_t(((moduleList[i].voltage_avg) & 0xFF00) >> 8);
+          sendBuff[3] = uint8_t((moduleList[i].voltage_avg) & 0xFF);
+          sendBuff[4] = uint8_t(((moduleList[i].temperature_avg) & 0xFF00) >> 8);
+          sendBuff[5] = uint8_t((moduleList[i].temperature_avg) & 0xFF);
 
-    } else {  // normal data
-      SendStatus();
-      if (CheckTimer(tmrSendData, 60000L)) {
-        for (uint8_t i = 0; i < modulesCount; i++) {
-          if (moduleList[i].validValues) {
-
-            sendBuff[0] = uint8_t(11 + i);
-            sendBuff[1] = uint8_t((moduleList[i].address - MODULE_ADDRESS_RANGE_START + 1) & 0xFF);
-            sendBuff[2] = uint8_t(((moduleList[i].voltage_avg) & 0xFF00) >> 8);
-            sendBuff[3] = uint8_t((moduleList[i].voltage_avg) & 0xFF);
-            sendBuff[4] = uint8_t(((moduleList[i].temperature_avg) & 0xFF00) >> 8);
-            sendBuff[5] = uint8_t((moduleList[i].temperature_avg) & 0xFF);
-
-            cnt = Send(sendBuff, 6);
-            if (cnt <= 0) {
-              Log("Sending data failed!");
-            }
+          cnt = Send(sendBuff, 6);
+          if (cnt <= 0) {
+            Log("Sending data failed!");
+            return false;
           }
         }
       }
     }
-    tmrCommTimeout = millis();
-    xServerEndPacket = false;
-    while ((millis() - tmrCommTimeout < 4L * 1000) && !xServerEndPacket) {
-      wdt_reset();
-      if (ethClient.available()) {
-        uint8_t rcv = ethClient.read();
-        Receive(rcv);
-        //Serial.println(rcv);
-      }
-    }
-
-    ethClient.stop();
+  }
+  return true;
 }
 
-void SendEvent(uint8_t id, uint8_t sub_id) {
+bool SendEvent(uint8_t id, uint8_t sub_id) {
   sendBuff[0] = id;
   sendBuff[1] = sub_id;
 
-  int retCon = ethClient.connect(ipServer, 23);
-  if (retCon != 1) {
-    Log("Connection to server failed! error code:");
-    Log(retCon);
-    status_eth = 30;
-  } else {
-    status_eth = 1;  //ok status
-    int cnt_ = Send(sendBuff, 2);
-    if (cnt_ <= 0) {
-      Log("Sending status failed!");
-    }
-    ethClient.stop();
+  int cnt_ = Send(sendBuff, 2);
+  if (cnt_ <= 0) {
+    Log("Sending event failed!");
+    return false;
   }
+  return true;
 }
 
-void SendStatus() {
+bool SendStatus() {
   sendBuff[0] = 10;
   sendBuff[1] = stateMachineStatus;
   sendBuff[2] = errorStatus;
@@ -410,5 +390,7 @@ void SendStatus() {
   int cnt_ = Send(sendBuff, 6);
   if (cnt_ <= 0) {
     Log("Sending status failed!");
+    return false;
   }
+  return true;
 }

@@ -6,7 +6,15 @@ void loop() {
   //periodically connect to the server and exchange data
   //and control heating
   if(CheckTimer(tmrServerComm, 10000L)){
-    ExchangeCommunicationWithServer();
+    CommWithServer();
+
+    ProcessReceivedData();
+    while(bridgeSerial.available() > 0){
+      Serial.print(".");
+      uint8_t x = bridgeSerial.read();
+      //Serial.println(x);
+      Receive(x);
+    }
 
     if(xHeating)//count energy if we are heating rack
       if(iHeatingEnergyCons<65535)iHeatingEnergyCons ++;
@@ -50,11 +58,13 @@ void loop() {
         delay(500);
         I2c.begin();
       }
-      
     }
+  }
 
-    if(xSafetyConditions)
-      BalanceCells();
+  if(CheckTimer(tmrBalance, 60000L * 10L)){ // every 10 mins
+      if(xSafetyConditions){
+        BalanceCells();
+      }
   }
 
   if(CheckTimer(tmrReadStatistics, 300000L)){//read statistics - each 5mins
@@ -179,10 +189,8 @@ void PowerStateMachine(){
     break;
     default:;
   }
-
   //rewrite to outputs
   digitalWrite(PIN_MAIN_RELAY, (stateMachineStatus==1 || stateMachineStatus==10 || stateMachineStatus==20));
-
 
 
   //reset all signals after one iteration
@@ -198,15 +206,20 @@ void PowerStateMachine(){
 // 1) if difference "Z" is bigger than threshold, burn energy. Z is calculated for each cell as: Z = thisCellV - min(otherCellsV)
 // 2) we are fully charged, but one or more cells has Z bigger than some small threshold
 void BalanceCells(){
-
+  const uint8_t MAX_BURN_CNT = 3;
+  int burn_modules_cnt = 0;
   //calculate sum voltage
   uint32_t sumVoltage = 0;
   for(int i=0;i<modulesCount;i++){
     sumVoltage += moduleList[i].voltage_avg;
+    if(moduleList[i].burning){
+      burn_modules_cnt++;
+    }
   }
   uint16_t imbalanceThreshold = 0;
   if(sumVoltage>=CHARGED_LEVEL)imbalanceThreshold = IMBALANCE_THRESHOLD_CHARGED; else imbalanceThreshold = IMBALANCE_THRESHOLD;
   
+
   for(int i=0;i<modulesCount;i++){
     //calculate "Z"
     uint16_t min=999;
@@ -230,6 +243,10 @@ void BalanceCells(){
           Log("\nError while setting cell to burn! module:");
           Log(moduleList[i].address);
         }
+        if (burn_modules_cnt++>=MAX_BURN_CNT){ // command to burn just maximally MAX_BURN_CNT modules
+          break;
+        }
+        
       }
     }
   }  
