@@ -4,7 +4,7 @@ void setup() {
    
   Serial.begin(19200);
   Serial.setTimeout(2000);
-  bridgeSerial.begin(19200);
+  bridgeSerial.begin(9600);
 
   Serial.print(F("Program start"));
 
@@ -17,6 +17,8 @@ void setup() {
 
   digitalWrite(PIN_MAIN_RELAY, false);
   digitalWrite(PIN_GARAGE, false);
+
+  delay(1000);
 
   ////////////////////////////////////////////////////////////////////////////////////////////
   

@@ -43,12 +43,12 @@ uint8_t mac[] = {0xDE, 0xAA, 0xBE, 0xEF, 0xFE, 0xED};
 
 //---------------------- PIN DEFINITIONS -----------------------------------------------------------
 // pinout rozvadec
-// cerna GND; fialova 13; pruhledna 12; modra 11; oranzova 10; bila 9; zelena 8; cervena 7; zluta 6
-#define PIN_MAIN_RELAY 8
+// cerna GND; fialova 6; pruhledna 5; modra 4; oranzova 3; zluta 2; zelena 1; ruzova 0;
+#define PIN_MAIN_RELAY 4
 //#define PIN_SOLAR_CONTACTOR 13
 //#define PIN_OUTPUT_DCAC_BREAKER 11
 //#define PIN_VENTILATOR 12
-#define PIN_GARAGE 13
+#define PIN_GARAGE 6
 
 //---------------------- COMMAND DEFINES -----------------------------------------------------------
 
@@ -180,7 +180,7 @@ bool xReadyToSendStatistics;
 uint16_t crcMismatchCounter;
 
 RunningMedian temperature_median = RunningMedian(5);
-auto bridgeSerial = Serial1;
+#define bridgeSerial Serial1
 
 union {
   float val;
