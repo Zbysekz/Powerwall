@@ -27,11 +27,11 @@ void loop() {
     }
   }    
 
-  if(!epeverReadReq && (millis()-tmrEpeverRead > 4000L)){
+  if(!epeverReadReq && (millis()-tmrEpeverRead > 5000L) || (millis()-tmrEpeverRead > 40000L)){
     epeverReadReq = true;
     tmrEpeverRead = millis();
 
-    /*if(cnt_single_epever++>5){
+    if(cnt_single_epever++>5){
       cnt_single_epever=0;
       epeverRegPtr=0;
       epeverRegPtr2=0;
@@ -39,7 +39,7 @@ void loop() {
       if(selected_device++ >=EPEVER_MODULES){
         selected_device = 0;
       }
-    }*/
+    }
   }
 
   //error evaluation - if we don't have valid data for few secs, report error

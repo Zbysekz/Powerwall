@@ -154,7 +154,7 @@ void ICACHE_FLASH_ATTR setup() {
   
   LOG(F("Setup finished."));
 
-  selected_device = 1;
+  selected_device = 0;
   cnt_single_epever = 0;
   
 }

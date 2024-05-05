@@ -23,12 +23,15 @@ void Epever_SendRequest(uint16_t address, uint8_t device_id){
 void Epever_Receive(uint8_t device_id){
 
   while(Serial.available()>0){
-    if(serial_rxPtr<SERIAL_RX_BUFF_SIZE)
-      serial_rcvBuff[serial_rxPtr++] = (uint8_t)Serial.read();
+    if(serial_rxPtr<SERIAL_RX_BUFF_SIZE){
+      serial_rcvBuff[serial_rxPtr] = (uint8_t)Serial.read();
+      if(serial_rxPtr==0&&serial_rcvBuff[serial_rxPtr]==device_id+1){
+        serial_rxPtr++; // go further only if it is for you
+      }
+    }
   }
    
   if(serial_rxPtr>=7){
-  
     serial_rxPtr = 0;
     if(serial_rcvBuff[0]==(device_id+1) && serial_rcvBuff[1]==0x04 && serial_rcvBuff[2]==0x02){
       crc = CRC16_modbus(serial_rcvBuff,5);
@@ -121,7 +124,7 @@ void HandleEpever(uint8_t device_id){
        break;
     }
 
-    if(epeverStatus!=0 && (millis()-tmrTimeout > 200L)){//timeout happened in some step
+    if(epeverStatus!=0 && (millis()-tmrTimeout > 400L)){//timeout happened in some step
        epeverStatus = 0;
        epeverDataValid = false;
        serial_rxPtr = 0;
