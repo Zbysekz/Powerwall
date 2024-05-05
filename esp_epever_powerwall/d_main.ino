@@ -27,7 +27,7 @@ void loop() {
     }
   }    
 
-  if(!epeverReadReq && (millis()-tmrEpeverRead > 5000L) || (millis()-tmrEpeverRead > 40000L)){
+  if((!epeverReadReq && (millis()-tmrEpeverRead > 3000L)) || (millis()-tmrEpeverRead > 40000L)){
     epeverReadReq = true;
     tmrEpeverRead = millis();
 
@@ -36,7 +36,7 @@ void loop() {
       epeverRegPtr=0;
       epeverRegPtr2=0;
       epeverStatus=0;
-      if(selected_device++ >=EPEVER_MODULES){
+      if(++selected_device >=EPEVER_MODULES){
         selected_device = 0;
       }
     }

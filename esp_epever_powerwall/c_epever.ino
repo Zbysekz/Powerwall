@@ -25,8 +25,12 @@ void Epever_Receive(uint8_t device_id){
   while(Serial.available()>0){
     if(serial_rxPtr<SERIAL_RX_BUFF_SIZE){
       serial_rcvBuff[serial_rxPtr] = (uint8_t)Serial.read();
-      if(serial_rxPtr==0&&serial_rcvBuff[serial_rxPtr]==device_id+1){
-        serial_rxPtr++; // go further only if it is for you
+      if(serial_rxPtr==0){
+        if(serial_rcvBuff[serial_rxPtr]==device_id+1){
+          serial_rxPtr++; // go further only if it is for you
+        }
+      }else{
+        serial_rxPtr++;
       }
     }
   }
@@ -93,6 +97,7 @@ void HandleEpever(uint8_t device_id){
   
     switch(epeverStatus){
        case 0:
+        tmrTimeout = millis();
         if(millis()-tmrRequest > 50L){
           tmrRequest = millis();
           Epever_SendRequest(epeverReadRegisters[epeverRegPtr2], device_id);
@@ -131,9 +136,6 @@ void HandleEpever(uint8_t device_id){
        timeoutReq ++;
        epever_data[device_id].comm_status = 2; // timeout
     }
-    if(epeverStatus == 0)
-      tmrTimeout = millis();
-
 
   Epever_Receive(device_id);
 }

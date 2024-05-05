@@ -56,7 +56,7 @@ uint16_t batteryStatus, chargerStatus;
 uint8_t comm_status; // 0 for data not yet read, 1 ok read all registers, 2 timeout comm
 };
 
-#define EPEVER_MODULES 2
+#define EPEVER_MODULES 5
 
 epever_data_t epever_data[EPEVER_MODULES];
 uint8_t selected_device;
