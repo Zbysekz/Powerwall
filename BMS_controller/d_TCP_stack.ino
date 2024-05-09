@@ -150,7 +150,7 @@ void ProcessReceivedData(uint8_t data[]) {
       break;
     case 20:
       if (len == 2){
-        garage_contactor = data[2];
+        xGarage_contactor = data[2];
         Log("CMD GARAGE");
       }
     break;
@@ -395,7 +395,7 @@ bool SendStatus() {
   sendBuff[1] = stateMachineStatus;
   sendBuff[2] = errorStatus;
   sendBuff[3] = errorStatus_cause;
-  sendBuff[4] = ((uint8_t)xHeating << 1) | ((uint8_t)solarConnected << 0);  // various states
+  sendBuff[4] = ((uint8_t)xGarage_contactor << 2) | ((uint8_t)xHeating << 1) | ((uint8_t)solarConnected << 0);  // various states
   sendBuff[5] = (uint8_t)errorWhichModule;
 
   int cnt_ = Send(sendBuff, 6);

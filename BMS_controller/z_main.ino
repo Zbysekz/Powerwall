@@ -29,7 +29,7 @@ void loop() {
     }
   }*/
 
-  digitalWrite(PIN_GARAGE, garage_contactor);
+  digitalWrite(PIN_GARAGE, xGarage_contactor);
   //digitalWrite(PIN_SOLAR_IN, solarConnected);
   //digitalWrite(PIN_VENTILATOR, xHeating || );
   xSafetyConditions = getSafetyConditions();

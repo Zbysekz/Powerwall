@@ -134,7 +134,7 @@ struct cell_module {
 #define ERROR_TEMP_RANGES 0x10
 
 //---------------------- VARIABLES -----------------------------------------------------------
-bool garage_contactor;
+bool xGarage_contactor;
 uint8_t sendBuff[100];
 
 bool xFullReadDone,xSafetyConditions;
