@@ -54,11 +54,11 @@ void ProcessReceivedData(uint8_t data[]) {
 
       res = Cell_set_voltage_calibration(data[2], float_to_bytes.val);
       if (res) {
-        //Log("Success");
+        Log("Success");
         ReadModules(false);  //read all fully
-      }                      /*else{
+      }else{
         Log("Failed!");
-       }*/
+      }
       break;
     case 15:  // set voltage calibration to specific cell
       float_to_bytes.buffer[0] = data[3];
@@ -66,17 +66,17 @@ void ProcessReceivedData(uint8_t data[]) {
       float_to_bytes.buffer[2] = data[5];
       float_to_bytes.buffer[3] = data[6];
 
-      //Log("Calibrating voltage for module:");
-      //Serial.println(data[2]);
-      //Serial.println(float_to_bytes.val,3);
+      Log("Calibrating voltage for module:");
+      Serial.println(data[2]);
+      Serial.println(float_to_bytes.val,3);
 
       res = Cell_set_voltage_calibration2(data[2], float_to_bytes.val);
       if (res) {
-        //Log("Success");
+        Log("Success");
         ReadModules(false);  //read all fully
-      }                      /*else{
+      }else{
         Log("Failed!");
-       }*/
+      }
       break;
     case 5:  // set temperature calibration to specific cell
       float_to_bytes.buffer[0] = data[3];
@@ -84,17 +84,17 @@ void ProcessReceivedData(uint8_t data[]) {
       float_to_bytes.buffer[2] = data[5];
       float_to_bytes.buffer[3] = data[6];
 
-      //Log("Calibrating temperature for module:");
-      //Serial.println(data[2]);
-      //Serial.println(float_to_bytes.val,3);
+      Log("Calibrating temperature for module:");
+      Serial.println(data[2]);
+      Serial.println(float_to_bytes.val,3);
 
       res = Cell_set_temperature_calibration(data[2], float_to_bytes.val);
       if (res) {
-        //Log("Success");
+        Log("Success");
         ReadModules(false);  //read all fully
-      }                      /*else{
+      }else{
         Log("Failed!");
-       }*/
+      }
       break;
     case 16:  // set temperature calibration to specific cell
       float_to_bytes.buffer[0] = data[3];
@@ -102,17 +102,17 @@ void ProcessReceivedData(uint8_t data[]) {
       float_to_bytes.buffer[2] = data[5];
       float_to_bytes.buffer[3] = data[6];
 
-      //Log("Calibrating temperature for module:");
-      //Serial.println(data[2]);
-      //Serial.println(float_to_bytes.val,3);
+      Log("Calibrating temperature for module:");
+      Serial.println(data[2]);
+      Serial.println(float_to_bytes.val,3);
 
       res = Cell_set_temperature_calibration2(data[2], float_to_bytes.val);
       if (res) {
-        //Log("Success");
+        Log("Success");
         ReadModules(false);  //read all fully
-      }                      /*else{
+      }else{
         Log("Failed!");
-       }*/
+      }
       break;
     case 6:
       /*if(Cell_read_raw_voltage(data[2], auxVal)){
