@@ -16,6 +16,7 @@ WiFiClient wifiClient;
 #define BUFFER_SIZE 50
 #define QUEUE_SIZE 20
 
+#define pin_LED 16
 
 long unsigned int tmrSendDataToServer, tmrCheckForData, tmrTimeoutReceive;
 
@@ -27,7 +28,7 @@ uint8_t queue_ptr_actual,queue_ptr_ready;
 
 uint8_t rx, expected_len, buffer_ptr, receive_state;
 bool minutes_latch;
-SoftwareSerial bridgeSerial(D2, D3); // RX, TX
+SoftwareSerial bridgeSerial(4, 0); // D2,D3, RX, TX
 
 // comm statistics
 uint32_t serial_ok_packets, serial_invalid_packets1, serial_invalid_packets2, serial_invalid_packets3;

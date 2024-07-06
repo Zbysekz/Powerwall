@@ -43,12 +43,11 @@ uint8_t mac[] = {0xDE, 0xAA, 0xBE, 0xEF, 0xFE, 0xED};
 
 //---------------------- PIN DEFINITIONS -----------------------------------------------------------
 // pinout rozvadec
-// cerna GND; fialova 6; pruhledna 5; modra 4; oranzova 3; zluta 2; zelena 1; ruzova 0;
-#define PIN_MAIN_RELAY 4
+#define PIN_MAIN_RELAY 2
 //#define PIN_SOLAR_CONTACTOR 13
 //#define PIN_OUTPUT_DCAC_BREAKER 11
 //#define PIN_VENTILATOR 12
-#define PIN_GARAGE 6
+#define PIN_GARAGE 3
 
 //---------------------- COMMAND DEFINES -----------------------------------------------------------
 

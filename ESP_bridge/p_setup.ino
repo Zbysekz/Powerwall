@@ -6,7 +6,14 @@ void ICACHE_FLASH_ATTR setup(){
   bridgeSerial.begin(19200);
 
   Serial.println(F("Program start"));
+
+  pinMode(LED_BUILTIN, OUTPUT);
+  pinMode(pin_LED, OUTPUT);
   
+  digitalWrite(LED_BUILTIN, true);
+  delay(300);
+  digitalWrite(LED_BUILTIN, false);
+
   //WIFI
   WiFi.mode(WIFI_STA);
   WiFi.config(ip, gateway, subnet);   
@@ -21,13 +28,8 @@ void ICACHE_FLASH_ATTR setup(){
   ArduinoOTA.setHostname("ESP_bridge powerwall");
   ArduinoOTA.begin();
 
-
   EEPROM.begin(512);
 
-
-  digitalWrite(LED_BUILTIN, false);
-  delay(300);
-  digitalWrite(LED_BUILTIN, true);
 
   Serial.println(F("Setup finished"));
 
@@ -35,5 +37,14 @@ void ICACHE_FLASH_ATTR setup(){
   receive_state = 0;
   queue_ptr_actual = 0;
   queue_ptr_ready = 0;
+
+  for(int i = 0;i<3;i++){
+    digitalWrite(LED_BUILTIN, true);
+    delay(300);
+    digitalWrite(LED_BUILTIN, false);
+    delay(300);
+  }
+
+  digitalWrite(pin_LED, true);
 
 }

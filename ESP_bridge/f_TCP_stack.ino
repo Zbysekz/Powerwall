@@ -6,19 +6,44 @@ void ConnectToWifi(){
     Serial.println("Waiting for connection result..");
 
     unsigned long wifiConnectStart = millis();
-    
+
     while (WiFi.status() != WL_CONNECTED) {
         // Check to see if
         if (WiFi.status() == WL_CONNECT_FAILED) {
-          Serial.println("Failed to connect to WiFi");
+          Serial.println("not yet connected to WiFi");
+            digitalWrite(LED_BUILTIN, digitalRead(LED_BUILTIN));
         }
     
-        delay(500);
+        delay(1000);
         // Only try for 5 seconds.
         if (millis() - wifiConnectStart > 15000) {
           Serial.println("Failed to connect to WiFi");
+          connectedToWifi = false;
+          break;
         }
+        wdt_reset();
     }
+    
+    if (!connectedToWifi){
+      WiFi.begin(ssid2, password);
+      wifiConnectStart = millis();
+      while (WiFi.status() != WL_CONNECTED) {
+          // Check to see if
+          if (WiFi.status() == WL_CONNECT_FAILED) {
+            Serial.println("not yet connected to secondary WiFi");
+            digitalWrite(LED_BUILTIN, digitalRead(LED_BUILTIN));
+          }
+      
+          delay(1000);
+          // Only try for 5 seconds.
+          if (millis() - wifiConnectStart > 15000) {
+            Serial.println("Failed to connect to secondary WiFi - restarting");
+            while(1){};
+          }
+          wdt_reset();
+      }
+    }
+    connectedToWifi = true;
     Serial.println(F("Connected!"));   
 }
 void CommWithServer(){
