@@ -6,7 +6,8 @@ void ConnectToWifi(){
     Serial.println("Waiting for connection result..");
 
     unsigned long wifiConnectStart = millis();
-
+    connectedToWifi = true;
+    
     while (WiFi.status() != WL_CONNECTED) {
         // Check to see if
         if (WiFi.status() == WL_CONNECT_FAILED) {
