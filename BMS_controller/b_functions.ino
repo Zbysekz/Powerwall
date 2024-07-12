@@ -118,13 +118,25 @@ bool ReadModuleQuick(struct  cell_module *module) {
     module->voltage = voltage;
     // calculation of avg value///////////////
     module->voltage_buff[(module->voltAvgPtr)++] = module->voltage;
-    if(module->voltAvgPtr>=VOLT_AVG_SAMPLES)
+    if(module->voltAvgPtr>=VOLT_AVG_SAMPLES){
+      module->avg_ready = true;
       module->voltAvgPtr = 0;
+      module->voltage_buff2[(module->voltAvg2Ptr)++] = module->voltage_avg;
+      if(module->voltAvg2Ptr>=VOLT_AVG2_SAMPLES){
+        module->voltAvg2Ptr = 0;
+        module->avg2_ready = true;
+      }
+    }
 
-    module->voltage_avg = 0;
+    uint32_t temp = 0;
     for(int i=0;i<VOLT_AVG_SAMPLES;i++)
-      module->voltage_avg+=module->voltage_buff[i];
-    module->voltage_avg/=VOLT_AVG_SAMPLES;
+      temp+=module->voltage_buff[i];
+    module->voltage_avg = temp / VOLT_AVG_SAMPLES;
+    
+    temp = 0;
+    for(int i=0;i<VOLT_AVG2_SAMPLES;i++)
+      temp+=module->voltage_buff2[i];
+    module->voltage_avg_slow = temp / VOLT_AVG2_SAMPLES;
 
     ////////////////////////////////////////
 

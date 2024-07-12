@@ -85,6 +85,8 @@ uint8_t mac[] = {0xDE, 0xAA, 0xBE, 0xEF, 0xFE, 0xED};
 #define VOLT_AVG_SAMPLES 6
 #define TEMP_AVG_SAMPLES 6
 
+#define VOLT_AVG2_SAMPLES 100
+
 void Log(int integer);
 void Log(const wchar_t *str);
 void Log(float str, int decimal_places);
@@ -99,8 +101,16 @@ struct cell_module {
   uint16_t temperature;//temperature of PTC sensor [0,1°C]
 
   uint16_t voltage_avg;
+  uint16_t voltage_avg_slow;
+
   uint16_t voltage_buff[VOLT_AVG_SAMPLES];
   uint8_t voltAvgPtr;
+
+  uint16_t voltage_buff2[VOLT_AVG2_SAMPLES];
+  uint8_t voltAvg2Ptr;
+
+  bool avg_ready;
+  bool avg2_ready;
 
   uint16_t temperature_avg;
   uint16_t temperature_buff[TEMP_AVG_SAMPLES];

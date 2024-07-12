@@ -7,6 +7,7 @@ static inline void initTimer1(void)
   OCR1C = 64;  //About eighth of a second trigger Timer1  (there are 488 counts per second @ 8mhz)
   TIMSK |= (1 << OCIE1A); // enable compare match interrupt
 }
+
 void init_i2c() {
   TinyWireS.begin(currentConfig.SLAVE_ADDR);
   TinyWireS.onReceive(receiveEvent);

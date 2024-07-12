@@ -206,12 +206,12 @@ void PowerStateMachine(){
 // 1) if difference "Z" is bigger than threshold, burn energy. Z is calculated for each cell as: Z = thisCellV - min(otherCellsV)
 // 2) we are fully charged, but one or more cells has Z bigger than some small threshold
 void BalanceCells(){
-  const uint8_t MAX_BURN_CNT = 3;
+  const uint8_t MAX_BURN_CNT = 10;
   int burn_modules_cnt = 0;
   //calculate sum voltage
   uint32_t sumVoltage = 0;
   for(int i=0;i<modulesCount;i++){
-    sumVoltage += moduleList[i].voltage_avg;
+    sumVoltage += moduleList[i].voltage_avg_slow;
     if(moduleList[i].burning){
       burn_modules_cnt++;
     }
@@ -225,19 +225,23 @@ void BalanceCells(){
     uint16_t min=999;
     for(int y=0;y<modulesCount;y++)
       if(i!=y){
-        if(moduleList[y].voltage_avg<min)
-          min=moduleList[y].voltage_avg;
+        if(moduleList[y].voltage_avg_slow<min)
+          min=moduleList[y].voltage_avg_slow;
       }
 
-    if(moduleList[i].voltage_avg > min){//if you are the lowest, do not balance
-      if(moduleList[i].voltage_avg - min > imbalanceThreshold){
+    if(moduleList[i].voltage_avg_slow > min){//if you are the lowest, do not balance
+      if(moduleList[i].voltage_avg_slow - min > imbalanceThreshold){
         //start burning for that module
         //only if he is not burning already
         bool res = true;
-        if(!moduleList[i].burning){
-          res = Cell_set_bypass_voltage(moduleList[i].address, min + imbalanceThreshold);// burn to just match imbalance threshold
+        if(!moduleList[i].burning && moduleList[i].avg2_ready){
+          res = Cell_set_bypass_voltage(moduleList[i].address, min);// burn to minimal voltage
           Log("\nBURNING start! module:");
           Log(moduleList[i].address);
+          Log("Was at:");
+          Log(moduleList[i].voltage_avg_slow);
+          Log("Want go down to:");
+          Log(min);
         }
         if(!res){
           Log("\nError while setting cell to burn! module:");
