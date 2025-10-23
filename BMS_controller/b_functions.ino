@@ -22,6 +22,7 @@ bool getSafetyConditions(){
    
   for(int i=0;i<modulesCount;i++){
     if(!moduleList[i].validValues){
+      errorWhichModule=i+40;
       validValues = false;
       break;
     }
@@ -105,8 +106,8 @@ bool ReadModuleQuick(struct  cell_module *module) {
       Log(module->address);
     }
     
-    if(++(module->readErrCnt)>=3)
-      module->validValues = false;//comm failure must happen 3x times to consider values as invalid
+    if(++(module->readErrCnt)>=10)
+      module->validValues = false;//comm failure must happen 10x times to consider values as invalid
     return false;
   }
   

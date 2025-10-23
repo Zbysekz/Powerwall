@@ -82,8 +82,8 @@ uint8_t mac[] = {0xDE, 0xAA, 0xBE, 0xEF, 0xFE, 0xED};
 
 
 
-#define VOLT_AVG_SAMPLES 6
-#define TEMP_AVG_SAMPLES 6
+#define VOLT_AVG_SAMPLES 12
+#define TEMP_AVG_SAMPLES 12
 
 #define VOLT_AVG2_SAMPLES 100
 
