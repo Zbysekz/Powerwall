@@ -223,11 +223,12 @@ void BalanceCells(){
   for(int i=0;i<modulesCount;i++){
     //calculate "Z"
     uint16_t min=999;
-    for(int y=0;y<modulesCount;y++)
+    for(int y=0;y<modulesCount;y++){
       if(i!=y){
         if(moduleList[y].voltage_avg_slow<min)
           min=moduleList[y].voltage_avg_slow;
       }
+    }
 
     if(moduleList[i].voltage_avg_slow > min){//if you are the lowest, do not balance
       if(moduleList[i].voltage_avg_slow - min > imbalanceThreshold){
