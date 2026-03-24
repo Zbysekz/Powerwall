@@ -43,7 +43,7 @@
 //Number of voltage readings to take before we take a temperature reading
 #define TEMP_READING_LOOP_FREQ 16
 
-#define MAX_BURN_CYCLES 1000000UL // protection for not burning too long
+#define MAX_BURN_CYCLES 10000UL // protection for not burning too long, should be around 20mins
 
 //If we receive a cmdByte with BIT 6 set its a command byte so there is another byte waiting for us to process
 #define COMMAND_BIT 6
