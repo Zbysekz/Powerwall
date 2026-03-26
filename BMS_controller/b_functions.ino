@@ -251,12 +251,12 @@ uint8_t Provision() {//finding cell modules with default addresses
 
 
 void ScanModules() {
-  Log("Scanning for modules");
+  //Log("Scanning for modules");
   modulesCount=0;
   for (uint8_t address = MODULE_ADDRESS_RANGE_START; address <= MODULE_ADDRESS_RANGE_END; address++ )
   {
     if (PingModule(address) == true) {
-      Log("Module discovered! Address:");    
+      //Log("Module discovered! Address:");    
       Log(address);
       
       moduleList[modulesCount].address = address;
@@ -267,7 +267,7 @@ void ScanModules() {
       modulesCount++;
     }
   }
-  Log("End scanning.");
+  //Log("End scanning.");
 }
 
 void PrintModuleInfo(struct  cell_module *module, bool withCal){

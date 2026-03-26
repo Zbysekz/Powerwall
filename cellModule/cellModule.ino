@@ -16,6 +16,7 @@
   ATTINY85/V-10PU data sheet
   http://www.atmel.com/images/atmel-2586-avr-8-bit-microcontroller-attiny25-attiny45-attiny85_datasheet.pdf
   To manually configure ATTINY fuses use "avrdudess" sw (GUI)
+  or avrdude CLI with command "avrdude -p t85 -c usbasp -U efuse:w:0xFF:m -U hfuse:w:0xD5:m -U lfuse:w:0xE2:m"
   Efuse: 0xff Hfuse:0xd5 Lfuse0xe2
   If you burn incorrect fuses to ATTINY85 you may need to connect a crystal over the pins to make it work again!
   

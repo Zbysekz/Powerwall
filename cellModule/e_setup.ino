@@ -8,16 +8,8 @@ static inline void initTimer1(void)
   TIMSK |= (1 << OCIE1A); // enable compare match interrupt
 }
 
-void init_i2c() {
-  TinyWireS.begin(currentConfig.SLAVE_ADDR);
-  TinyWireS.onReceive(receiveEvent);
-  TinyWireS.onRequest(requestEvent);
-}
 
-void disable_i2c(){
-  USICR = 0; //control register
-  USISR = 0; //status register
-}
+
 
 void setup() {
   //Must be first line of setup()

@@ -1,3 +1,13 @@
+void init_i2c() {
+  TinyWireS.begin(currentConfig.SLAVE_ADDR);
+  TinyWireS.onReceive(receiveEvent);
+  TinyWireS.onRequest(requestEvent);
+}
+
+void disable_i2c(){
+  USICR = 0; //control register
+  USISR = 0; //status register
+}
 
 inline void ledON() {
   DDRB |= (1 << DDB1);

@@ -34,6 +34,7 @@ void ProcessReceivedData(uint8_t data[]) {
       ScanI2C();
       break;
     case 2:
+      Log("Provisioning....");
       Provision();
       //cant call ScanModules() here, because it is too fast, cell nedds some time to process
       xFullReadDone = false;
