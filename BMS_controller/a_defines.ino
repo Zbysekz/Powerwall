@@ -46,7 +46,7 @@ uint8_t mac[] = {0xDE, 0xAA, 0xBE, 0xEF, 0xFE, 0xED};
 #define PIN_MAIN_RELAY 2
 //#define PIN_SOLAR_CONTACTOR 13
 //#define PIN_OUTPUT_DCAC_BREAKER 11
-#define PIN_VENTILATOR 19
+#define PIN_VENTILATOR 10
 #define PIN_GARAGE 3
 
 //---------------------- COMMAND DEFINES -----------------------------------------------------------
