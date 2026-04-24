@@ -31,7 +31,6 @@ void loop() {
 
   digitalWrite(PIN_GARAGE, xGarage_contactor);
   //digitalWrite(PIN_SOLAR_IN, solarConnected);
-  //digitalWrite(PIN_VENTILATOR, xHeating || );
   xSafetyConditions = getSafetyConditions();
   
   PowerStateMachine();//state machine for relay power control
@@ -59,6 +58,15 @@ void loop() {
         I2c.begin();
       }
     }
+    // check if modules are burning, if yes start ventilator to cool down the butning resistors
+    bool xVentCmd = false;
+    for(int i=0;i<modulesCount;i++){
+      if(moduleList[i].burning){
+        xVentCmd = true;
+        break;
+      }
+    }
+    digitalWrite(PIN_VENTILATOR, xVentCmd );
   }
 
   if(CheckTimer(tmrBalance, 60000L * 10L)){ // every 10 mins

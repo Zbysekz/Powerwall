@@ -12,9 +12,12 @@ void setup() {
   //inputs/outputs
   pinMode(PIN_MAIN_RELAY, OUTPUT);
   pinMode(PIN_GARAGE, OUTPUT);
+  pinMode(PIN_VENTILATOR, OUTPUT);
 
   digitalWrite(PIN_MAIN_RELAY, false);
   digitalWrite(PIN_GARAGE, false);
+  digitalWrite(PIN_VENTILATOR, true);
+  
 
   delay(1000);
 
